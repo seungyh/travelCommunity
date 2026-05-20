@@ -1,0 +1,36 @@
+.header-area {
+    height:70px;
+    width: 100%;
+    border-bottom: solid 1px black;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+}
+.logo-area {
+    margin-left: 30px;
+    cursor: pointer;
+}
+.logo-area .title{
+    font-size: x-large;
+    font-weight: bold;
+}
+.header-menu-area{
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+}
+.header-area .btn {
+    height: 30px;
+    cursor: pointer;
+    display: inline-block;
+    align-items: center;
+}
+.header-menu-right-area {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    width: 330px;
+}
