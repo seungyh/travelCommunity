@@ -1,4 +1,4 @@
-package com.travel.community.account.dto.request;
+package com.travel.community.pages.account.dto.request;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;

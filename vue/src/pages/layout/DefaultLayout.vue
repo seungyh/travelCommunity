@@ -2,7 +2,7 @@
 
 <template>
   <div>
-    <headerLayout></headerLayout>
+    <HeaderLayout></headerLayout>
     <div class="bg-lightgray-300">
       <router-view></router-view>
     </div>
@@ -10,7 +10,8 @@
 </template>
 
 <script setup lang="ts">
-import headerLayout from "./HeaderLayout.vue";
+import HeaderLayout from './header/HeaderLayout.vue';
+
 </script>
 
 <style scoped>
