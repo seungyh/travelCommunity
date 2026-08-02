@@ -7,7 +7,9 @@ import { ref } from "vue";
 import router from "@/router";
 
 export const useAuthStore = defineStore("auth", () => {
-	const isLogin = ref(false);
+	const isLogin = ref(false); // 로그인 여부
+	const email = ref(""); // 로그인한 사용자 이메일
+	const nickName = ref(""); // 로그인한 사용자 닉네임
 
 	// 로그인 상태 저장
 	const setLogin = () => {
@@ -16,8 +18,22 @@ export const useAuthStore = defineStore("auth", () => {
 	//로그아웃 상태 저장
 	const setLogout = () => {
 		isLogin.value = false;
+		email.value = "";
+		nickName.value = "";
 	};
 
+	const setEmail = (userEmail: string) => {
+		email.value = userEmail;
+	};
+	const getEmail = () => {
+		return email.value;
+	};
+	const setNickName = (userNickName: string) => {
+		nickName.value = userNickName;
+	};
+	const getNickName = () => {
+		return nickName.value;
+	};
 	// 로그인 상태 가져오기
 	const getLogin = (): boolean => {
 		return isLogin.value;
@@ -51,7 +67,8 @@ export const useAuthStore = defineStore("auth", () => {
 	const successLogin = (res: LoginResponse) => {
 		sessionStorage.setItem("userId", res.userId);
 		setLogin();
-		console.log("res success", res);
+		setEmail(res.email);
+		setNickName(res.nickName);
 		router.push("/");
 	};
 	return {
@@ -60,5 +77,9 @@ export const useAuthStore = defineStore("auth", () => {
 		setLogout,
 		getLogin,
 		tokenLogin,
+		setEmail,
+		getEmail,
+		setNickName,
+		getNickName,
 	};
 });

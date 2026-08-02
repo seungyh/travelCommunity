@@ -1,6 +1,7 @@
 package com.travel.community.pages.account.controller;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -11,6 +12,7 @@ import com.travel.community.pages.account.dto.request.LoginRequest;
 import com.travel.community.pages.account.dto.request.SignUpRequest;
 import com.travel.community.pages.account.dto.response.LoginResponse;
 import com.travel.community.pages.account.service.AccountService;
+import com.travel.community.pages.account.service.NickNameCreator;
 import com.travel.community.pages.common.dto.CommonResponse;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,6 +26,7 @@ import lombok.RequiredArgsConstructor;
 public class AccountController {
 
     private final AccountService service;
+    private final NickNameCreator nickNameCreator;
 
     /**
      * 로그인
@@ -70,5 +73,24 @@ public class AccountController {
     public ResponseEntity<LoginResponse> kakaoLogin(HttpServletRequest request) throws Exception {
         return ResponseEntity.ok(service.tokenLogin(request));
 
+    }
+
+    /**
+     * 로그인 후 csrf 토큰 생성
+     * 
+     * @param csrfToken
+     * @return
+     */
+    @GetMapping("/csrf")
+    public CsrfToken getCsrfToken(CsrfToken csrfToken) {
+        return csrfToken;
+    }
+
+    /**
+     * 임의 닉네임 생성하여 반환
+     */
+    @GetMapping("/nickName")
+    public ResponseEntity<String> getRandomNickName() {
+        return ResponseEntity.ok(nickNameCreator.getNickName());
     }
 }

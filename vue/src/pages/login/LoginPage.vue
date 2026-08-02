@@ -77,6 +77,7 @@
 								v-model="loginInfo.password"
 								:type="isHidePwd ? 'password' : 'text'"
 								class="w-full h-[40px] rounded-md border pr-10 pl-10"
+								placeholder="비밀번호를 입력해주세요."
 								@keyup.enter="login"
 							/>
 							<font-awesome-icon
@@ -85,7 +86,7 @@
 								icon="lock"
 							/>
 							<font-awesome-icon
-								v-if="isHidePwd"
+								v-if="!isHidePwd"
 								@click="isHidePwd = !isHidePwd"
 								class="absolute right-3 bottom-3 text-gray-500 cursor-pointer"
 								size="md"
@@ -100,99 +101,10 @@
 							/>
 						</div>
 					</div>
-					<div v-else class="w-full pt-3">
-						<div class="relative">
-							아이디
-							<input
-								v-model="signUpInfo.userId"
-								class="w-full h-[40px] rounded-md border pr-2 pl-10"
-								placeholder="아이디를 입력해주세요."
-							/>
-							<font-awesome-icon
-								class="absolute left-3 bottom-3 text-gray-500"
-								size="md"
-								:icon="['far', 'envelope']"
-							/>
-						</div>
-						<div class="relative">
-							비밀번호
-							<input
-								v-model="signUpInfo.password"
-								placeholder="비밀번호를 입력해주세요."
-								:type="isHidePwd ? 'password' : 'text'"
-								class="w-full h-[40px] rounded-md border pr-10 pl-10"
-							/>
-							<font-awesome-icon
-								class="absolute left-3 bottom-3 text-gray-500"
-								size="md"
-								icon="lock"
-							/>
-							<font-awesome-icon
-								v-if="isHidePwd"
-								@click="isHidePwd = !isHidePwd"
-								class="absolute right-3 bottom-3 text-gray-500 cursor-pointer"
-								size="md"
-								icon="eye"
-							/>
-							<font-awesome-icon
-								v-else
-								@click="isHidePwd = !isHidePwd"
-								class="absolute right-3 bottom-3 text-gray-500 cursor-pointer"
-								size="md"
-								icon="eye-slash"
-							/>
-						</div>
-						<div class="relative">
-							비밀번호 확인
-							<input
-								v-model="pwCheck"
-								placeholder="비밀번호를 다시 입력해주세요."
-								class="w-full h-[40px] rounded-md border pr-10 pl-10"
-							/>
-							<!-- <font-awesome-icon
-                            class="absolute left-3 bottom-3 text-gray-500"
-                            size="md"
-                            icon="lock" />
-                            <font-awesome-icon
-                            v-if="isHidePwd"
-                            @click="isHidePwd = !isHidePwd"
-                            class="absolute right-3 bottom-3 text-gray-500 cursor-pointer"
-                            size="md"
-                            icon="eye" />
-                            <font-awesome-icon
-                            v-else
-                            @click="isHidePwd = !isHidePwd"
-                            class="absolute right-3 bottom-3 text-gray-500 cursor-pointer"
-                            size="md"
-                            icon="eye-slash" /> -->
-						</div>
-						<div class="relative">
-							이메일
-							<input
-								v-model="signUpInfo.email"
-								class="w-full h-[40px] rounded-md border pr-2 pl-10"
-								placeholder="example@example.com"
-							/>
-							<font-awesome-icon
-								class="absolute left-3 bottom-3 text-gray-500"
-								size="md"
-								:icon="['far', 'envelope']"
-							/>
-						</div>
-						<div class="relative">
-							닉네임
-							<input
-								v-model="signUpInfo.nickName"
-								class="w-full h-[40px] rounded-md border pr-2 pl-10"
-								placeholder="커뮤니티에서 사용할 닉네임을 입력해주세요."
-							/>
-							<font-awesome-icon
-								class="absolute left-3 bottom-3 text-gray-500"
-								size="md"
-								:icon="['far', 'envelope']"
-							/>
-						</div>
-					</div>
+					<sign-up-component
+						v-if="!isLoginMode"
+						@changeLoginMode="isLoginMode = true"
+					></sign-up-component>
 					<div
 						v-if="isLoginMode"
 						class="text-teal-500 w-full text-right cursor-pointer"
@@ -207,14 +119,6 @@
 					>
 						<span @click="login">로그인</span>
 					</div>
-					<div
-						v-else
-						class="cursor-pointer rounded-md bg-teal-500 text-white w-full text-center h-[40px] pt-2"
-						style="margin-top: 10px"
-					>
-						<span @click="signUp">회원가입</span>
-					</div>
-
 					<div class="flex justify-between pt-3 w-full">
 						<div
 							class="flex-1 border-t border-gray-200 self-center"
@@ -236,65 +140,30 @@
 	</div>
 </template>
 <script setup lang="ts">
-import axios from "axios";
 import { ref } from "vue";
-import { emailCheck } from "@/utills/ValidCheck";
 import { useAuthStore } from "@/stores/Auth.ts";
 import type { LoginRequest } from "./types/request/LoginRequest";
+import SignUpComponent from "./SignUpComponent.vue";
 
 const auth = useAuthStore();
 const loginInfo = ref<LoginRequest>({
 	userId: "",
 	password: "",
 });
-const signUpInfo = ref({
-	userId: "",
-	email: "",
-	password: "",
-	nickName: "",
-});
-const pwCheck = ref("");
+
 const isLoginMode = ref(true);
 const isHidePwd = ref(true);
+
 const openKakaoLogin = () => {
 	// location.href = "http://localhost:8080/oauth2/authorization/kakao";
 	location.href = `${import.meta.env.VITE_API_URL}/oauth2/authorization/kakao`;
 };
 
-const validCheck = () => {
-	if (signUpInfo.value.password !== pwCheck.value) {
-		alert("비밀번호 확인이 일치하지 않습니다.");
-		return false;
-	}
-	if (!emailCheck(signUpInfo.value.email)) {
-		alert("Email 형식이 올바르지 않습니다.");
-		return false;
-	}
-	return true;
-};
 const login = () => {
 	auth.login(loginInfo.value);
 };
-const signUp = () => {
-	if (!validCheck()) {
-		return;
-	}
-	axios
-		.post("/web/api/account/sign-up", signUpInfo.value)
-		.then(() => {
-			alert("회원가입이 완료되었습니다.");
-			isLoginMode.value = true;
-		})
-		.catch((error) => {
-			console.log(error);
-		});
-};
 </script>
 <style scoped>
-/* .login-left-area {
-
-} */
-
 .m-auto {
 	margin: auto !important;
 }

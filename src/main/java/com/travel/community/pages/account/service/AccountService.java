@@ -1,15 +1,17 @@
 package com.travel.community.pages.account.service;
 
-import org.jspecify.annotations.Nullable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.travel.community.global.exception.dto.BusinessException;
 import com.travel.community.global.security.jwt.JwtManager;
 import com.travel.community.global.security.jwt.dto.TokenDto;
 import com.travel.community.pages.account.dto.request.LoginRequest;
 import com.travel.community.pages.account.dto.request.SignUpRequest;
 import com.travel.community.pages.account.dto.response.LoginResponse;
 import com.travel.community.pages.account.entity.UserEntity;
+import com.travel.community.pages.account.enums.AccountErrorCode;
+import com.travel.community.pages.account.enums.Roles;
 import com.travel.community.pages.account.enums.UserResponseMsg;
 import com.travel.community.pages.account.repository.AccountRepository;
 import com.travel.community.pages.common.dto.CommonResponse;
@@ -27,21 +29,27 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class AccountService {
 
-    private final AccountRepository repository;
+    private final AccountRepository accountRepository;
     private final OAuthRepository oAuthRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtManager jwtManager;
 
     public CommonResponse signUp(SignUpRequest request) {
 
+        // 중복 ID 확인
+        accountRepository.findByUserId(request.getUserId())
+                .ifPresent(i -> {
+                    throw new BusinessException(AccountErrorCode.EXIST_ACCOUNT);
+                });
+
         log.info("회원가입 user id: {}", request.getUserId());
         String encryptPassword = passwordEncoder.encode(request.getPassword());
 
         UserEntity user = UserEntity.builder().userId(request.getUserId()).password(encryptPassword)
-                .nickName(request.getNickName())
+                .nickName(request.getNickName()).email(request.getEmail()).role(Roles.USER)
                 .build();
 
-        repository.save(user);
+        accountRepository.save(user);
 
         return CommonResponse.builder().result(true).message(UserResponseMsg.SIGN_UP_SUCCESS.getMessage()).build();
     }
@@ -54,7 +62,7 @@ public class AccountService {
      * @return
      */
     public CommonResponse login(LoginRequest loginInfo, HttpServletResponse response) {
-        UserEntity user = repository.findByUserId(loginInfo.getUserId());
+        UserEntity user = accountRepository.findByUserId(loginInfo.getUserId()).get();
         if (user == null) {
             return CommonResponse.builder().result(false).message(UserResponseMsg.WRONG_LOGIN.getMessage()).build();
         }
@@ -80,7 +88,7 @@ public class AccountService {
         String nickName = null;
         // 일반 로그인이면 User 테이블 조회
         if (tokenDto.getType().equals(ProviderType.LOCAL)) {
-            UserEntity userEntity = repository.findByUserId(tokenDto.getUserId());
+            UserEntity userEntity = accountRepository.findByUserId(tokenDto.getUserId()).get();
             email = userEntity.getEmail();
             nickName = userEntity.getNickName();
             return LoginResponse.builder().userId(tokenDto.getUserId()).email(email).nickName(nickName).build();

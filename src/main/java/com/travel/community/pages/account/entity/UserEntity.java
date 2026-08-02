@@ -1,16 +1,17 @@
 package com.travel.community.pages.account.entity;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import com.travel.community.pages.account.enums.Roles;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -32,17 +33,14 @@ import lombok.NoArgsConstructor;
 public class UserEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
     @Column(name = "user_id", nullable = false, unique = true)
     private String userId; // 사용자 id
 
     @Column(nullable = false)
     private String password; // 사용자 pw
 
-    @Column(name = "email_valid")
-    private boolean emailValid; // 사용자 이메일 인증 여부
+    @Column(name = "email_verified")
+    private boolean emailVerified; // 사용자 이메일 인증 여부
 
     @Column(columnDefinition = "TEXT")
     private String bio; // 사용자 자기소개
@@ -55,7 +53,8 @@ public class UserEntity {
 
     private String phone; // 사용자 전화번호
 
-    private String role; // 사용자 권한
+    @Enumerated(EnumType.STRING)
+    private Roles role; // 사용자 권한
 
     @CreatedDate
     @Column(name = "created_at", updatable = false)
