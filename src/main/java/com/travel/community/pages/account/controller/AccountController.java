@@ -70,8 +70,9 @@ public class AccountController {
      * @return
      */
     @GetMapping("/token/login")
-    public ResponseEntity<LoginResponse> kakaoLogin(HttpServletRequest request) throws Exception {
-        return ResponseEntity.ok(service.tokenLogin(request));
+    public ResponseEntity<LoginResponse> tokenLogin(HttpServletRequest request, HttpServletResponse response)
+            throws Exception {
+        return ResponseEntity.ok(service.tokenLogin(request, response));
 
     }
 

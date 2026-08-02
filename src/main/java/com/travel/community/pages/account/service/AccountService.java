@@ -81,9 +81,15 @@ public class AccountService {
         return CommonResponse.builder().result(true).message(UserResponseMsg.LOGOUT_SUCCESS.getMessage()).build();
     }
 
-    public LoginResponse tokenLogin(HttpServletRequest request) throws Exception {
-        String jwt = jwtManager.getJwt(request);
-        TokenDto tokenDto = jwtManager.getTokenDto(jwt);
+    public LoginResponse tokenLogin(HttpServletRequest request, HttpServletResponse response) {
+        TokenDto tokenDto = null;
+        try {
+            String jwt = jwtManager.getJwt(request);
+            tokenDto = jwtManager.getTokenDto(jwt);
+        } catch (BusinessException e) {
+            jwtManager.getCookieToDelete(response);
+            return null;
+        }
         String email = null;
         String nickName = null;
         // 일반 로그인이면 User 테이블 조회

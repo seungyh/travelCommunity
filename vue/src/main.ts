@@ -8,9 +8,10 @@ import App from "./App.vue";
 import router from "./router";
 
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { createPinia } from "pinia";
 import { useAuthStore } from "./stores/Auth.ts";
+import type { ErrorResponse } from "./components/common/types/response/ErrorResponse.ts";
 
 const app = createApp(App);
 // 전역 컴포넌트 등록
@@ -25,18 +26,16 @@ axios.defaults.withXSRFToken = true; // axios가 자체적으로 XSRF-TOKEN을 �
 
 axios.interceptors.response.use(
 	(response) => {
+		console.log("res ", response);
 		return response;
 	},
-	(error) => {
-		if (error.status === 401) {
+	(error: AxiosError<ErrorResponse>) => {
+		if (error.response?.status === 401) {
 			// 인증 에러 재로그인 필요 세션 삭제
 			sessionStorage.removeItem("userId");
 			auth.setLogout();
-			console.log("logout ", auth.getLogin());
+			return Promise.reject(error);
 		}
-		// error.status
-		// thr
-		// res.status
 		throw error;
 	},
 );

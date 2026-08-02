@@ -10,10 +10,12 @@
 					<div
 						class="pl-4 pr-4 pb-2 border-b border-gray-200 cursor-default"
 					>
-						<span class="block w-full font-bold">홍길동</span>
-						<span class="block w-full text-sm text-gray-400"
-							>test@test.com</span
-						>
+						<span class="block w-full font-bold">{{
+							auth.getNickName()
+						}}</span>
+						<span class="block w-full text-sm text-gray-400">{{
+							auth.getEmail() ?? "이메일을 등록해주세요."
+						}}</span>
 					</div>
 					<div class="dropdown-item">
 						<font-awesome-icon :icon="['far', 'user']" />
@@ -22,7 +24,7 @@
 
 					<div class="dropdown-item">
 						<font-awesome-icon :icon="['fas', 'gear']" />
-						설정
+						프로필 편집
 					</div>
 
 					<div
@@ -45,9 +47,11 @@ import { DropdownType } from "../types/DropdownType";
 import axios, { AxiosError, type AxiosResponse } from "axios";
 import type { CommonResponse } from "@/components/common/types/response/CommonResponse";
 import type { ErrorResponse } from "@/components/common/types/response/ErrorResponse";
+import { useAuthStore } from "@/stores/Auth";
 
 const props = defineProps(["userId", "openDropdownType"]);
 
+const auth = useAuthStore();
 // 로그아웃
 const logout = () => {
 	axios
@@ -64,6 +68,7 @@ const logout = () => {
 // 로그아웃 처리
 const logoutProcess = () => {
 	sessionStorage.removeItem("userId");
+	auth.setLogout();
 };
 const src = computed(() => {
 	const url = new URL("https://api.dicebear.com/10.x/lorelei/svg");

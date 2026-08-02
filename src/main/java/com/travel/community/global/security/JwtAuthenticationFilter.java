@@ -11,7 +11,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import com.travel.community.global.exception.dto.BusinessException;
 import com.travel.community.global.security.jwt.JwtManager;
 import com.travel.community.global.security.jwt.dto.TokenDto;
-import com.travel.community.global.security.jwt.enums.FilterErrorCode;
+import com.travel.community.global.security.jwt.enums.JwtErrorCode;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -29,6 +29,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 	private final AntPathMatcher pathMatcher = new AntPathMatcher();
 	private final JwtManager jwtManager;
 
+	// 로그인 정보 필요한 기능은 token filter에서 검사
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
 			FilterChain filterChain) throws ServletException, IOException {
@@ -46,20 +47,30 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 			tokenDto = jwtManager.getTokenDto(token);
 
 		} catch (Exception e) {
-			throw new BusinessException(FilterErrorCode.INVALID_JWT);
+			tokenDeleteProcess(response);
+			throw new BusinessException(JwtErrorCode.INVALID_JWT);
 		}
 
+		// jwt에 userId 미존재
 		if (tokenDto.getUserId() != null) {
 			filterChain.doFilter(request, response);
 		} else {
-			// 검증 실패: 필터 단에서 즉시 401 Unauthorized 응답 반환
-			HttpServletResponse httpResponse = (HttpServletResponse) response;
-			httpResponse.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-			httpResponse.setContentType("application/json;charset=UTF-8");
-			httpResponse.getWriter().write("{\"error\": \"Invalid or Expired Token\"}");
-			jwtManager.getCookieToDelete(response);
+			tokenDeleteProcess(response);
+			throw new BusinessException(JwtErrorCode.INVALID_JWT);
+
 		}
 
+	}
+
+	// 토큰 삭제 및 에러 response에 저장
+	private void tokenDeleteProcess(HttpServletResponse response) throws IOException {
+
+		// 검증 실패: 필터 단에서 즉시 401 Unauthorized 응답 반환
+		HttpServletResponse httpResponse = (HttpServletResponse) response;
+		httpResponse.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+		httpResponse.setContentType("application/json;charset=UTF-8");
+		httpResponse.getWriter().write("{\"error\": \"Invalid or Expired Token\"}");
+		jwtManager.getCookieToDelete(response);
 	}
 
 }

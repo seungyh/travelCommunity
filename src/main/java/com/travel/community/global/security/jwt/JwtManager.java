@@ -1,7 +1,6 @@
 package com.travel.community.global.security.jwt;
 
 import java.nio.charset.StandardCharsets;
-import java.security.Key;
 import java.util.Date;
 import java.util.Optional;
 
@@ -11,18 +10,26 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.WebUtils;
 
+import com.travel.community.global.exception.dto.BusinessException;
 import com.travel.community.global.security.jwt.dto.TokenDto;
+import com.travel.community.global.security.jwt.enums.JwtErrorCode;
 import com.travel.community.pages.oauth.enums.ProviderType;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.UnsupportedJwtException;
+import io.jsonwebtoken.io.DecodingException;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class JwtManager {
@@ -56,7 +63,8 @@ public class JwtManager {
     }
 
     public String getJwt(HttpServletRequest request) {
-        return Optional.ofNullable(WebUtils.getCookie(request, JWT_NAME)).map(Cookie::getValue).orElseThrow();
+        return Optional.ofNullable(WebUtils.getCookie(request, JWT_NAME)).map(Cookie::getValue)
+                .orElseThrow(() -> new BusinessException(JwtErrorCode.INVALID_JWT));
     }
 
     /**
@@ -65,34 +73,34 @@ public class JwtManager {
      * @return
      * @throws Exception
      */
-    public TokenDto getTokenDto(String jwtToken) throws Exception {
+    public TokenDto getTokenDto(String jwtToken) {
         // 헤더에서 JWT 추출
-        // if (accessToken == null || accessToken.length() == 0) {
-        // throw new Exception(EMPTY_JWT);
-        // }
+        if (jwtToken == null || jwtToken.length() == 0) {
+            return null;
+        }
 
         try {
-            // user id가 에러 없이 반환되면 유효한 토큰임
-            // Jws<Claims> jws = Jwts.parser()
-            // .signingKey(key) // 서명 검증 키 설정
-            // .requireAudience("string") // 필요 시 특정 클레임 조건 설정 (선택)
-            // .build()
-            // .parseClaimsJws(jwtToken); // 토큰 파싱 (서명 검증 완료)
-            // SecretKey secretKey =
-            // Keys.hmacShaKeyFor(enSecretKey.getBytes(StandardCharsets.UTF_8));
+            // jwt 토큰에서 claims 추출
             Claims claims = Jwts.parser().verifyWith(key).build().parseSignedClaims(jwtToken).getPayload();
 
-            // 2. Claims(Payload) 획득
-            // Claims claims = jws.getBody();
-
-            // 3. Claims에서 "id" 추출하여 반환
+            // userId 추출
             String userId = claims.getSubject();
+            // 로그인 플랫폼 추출
             ProviderType type = ProviderType.valueOf(claims.get("provider", String.class));
 
             return TokenDto.builder().token(jwtToken).userId(userId).type(type).build();
 
-        } catch (Exception ignored) {
-            throw new Exception(ignored);
+        } catch (ExpiredJwtException e) {
+            log.warn("토큰 만료: {}", e.getMessage());
+            throw new BusinessException(JwtErrorCode.EXPIRED_JWT);
+
+        } catch (MalformedJwtException | UnsupportedJwtException | DecodingException | IllegalArgumentException e) {
+            log.warn("토큰 파싱 실패: {}", e.getMessage());
+            throw new BusinessException(JwtErrorCode.INVALID_JWT);
+
+        } catch (Exception e) {
+            log.error("원인을 알 수 없는 토큰 파싱 실패: {}", e.getMessage());
+            throw new BusinessException(JwtErrorCode.INVALID_JWT);
         }
 
     }
