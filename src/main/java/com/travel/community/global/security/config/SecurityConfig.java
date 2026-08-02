@@ -40,8 +40,7 @@ public class SecurityConfig {
 
 		return http
 				.csrf(csrf -> csrf.csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
-						.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-						.ignoringRequestMatchers(EXCLUDE_ADDRESS))
+						.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
 
 				.authorizeHttpRequests(auth -> auth
 						.requestMatchers(EXCLUDE_ADDRESS)
