@@ -8,8 +8,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.travel.community.global.exception.dto.BusinessException;
 import com.travel.community.global.security.jwt.JwtManager;
 import com.travel.community.global.security.jwt.dto.TokenDto;
+import com.travel.community.global.security.jwt.enums.FilterErrorCode;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -44,7 +46,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 			tokenDto = jwtManager.getTokenDto(token);
 
 		} catch (Exception e) {
-
+			throw new BusinessException(FilterErrorCode.INVALID_JWT);
 		}
 
 		if (tokenDto.getUserId() != null) {

@@ -7,8 +7,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 
+import com.travel.community.global.exception.dto.BusinessException;
 import com.travel.community.global.security.jwt.JwtManager;
 import com.travel.community.pages.oauth.dto.CustomOAuth2User;
+import com.travel.community.pages.oauth.enums.OAuthErrorCode;
 import com.travel.community.pages.oauth.enums.ProviderType;
 
 import jakarta.servlet.ServletException;
@@ -39,7 +41,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                 break;
 
             default:
-                // throw new Exception();
+                throw new BusinessException(OAuthErrorCode.INVALID_OAUTH_PLATFORM);
 
         }
 
