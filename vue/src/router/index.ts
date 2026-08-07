@@ -1,30 +1,38 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory } from "vue-router";
 
 // 페이지 import
-import MainPage from '../pages/home/MainPage.vue'
-import DefaultLayout from '@/pages/layout/DefaultLayout.vue'
-import LoginPage from '@/pages/login/LoginPage.vue'
+import MainPage from "../pages/home/MainPage.vue";
+import DefaultLayout from "@/pages/layout/DefaultLayout.vue";
+import LoginPage from "@/pages/login/LoginPage.vue";
+import BoardWrite from "@/pages/board/write/BoardWrite.vue";
 
 const routes = [
-  {
-    path: '/',
-    component: DefaultLayout,
-    children: [
-      {
-        path: '', name: 'home', component: MainPage
-      }
-    ]
-  },
-  {
-    path: '/login',
-    name: 'login',
-    component: LoginPage,
-  },
-]
+	{
+		path: "/",
+		component: DefaultLayout,
+		children: [
+			{
+				path: "",
+				name: "home",
+				component: MainPage,
+			},
+			{
+				path: "/board/write",
+				name: "boardWrite",
+				component: BoardWrite,
+			},
+		],
+	},
+	{
+		path: "/login",
+		name: "login",
+		component: LoginPage,
+	},
+];
 
 const router = createRouter({
-  history: createWebHistory(),
-  routes,
-})
+	history: createWebHistory(),
+	routes,
+});
 
-export default router
+export default router;
