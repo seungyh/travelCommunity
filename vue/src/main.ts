@@ -1,5 +1,4 @@
 import "./assets/main.css";
-import "./assets/header.css";
 
 import "./components/fontawesome/FontAwesome";
 
@@ -26,7 +25,6 @@ axios.defaults.withXSRFToken = true; // axios가 자체적으로 XSRF-TOKEN을 �
 
 axios.interceptors.response.use(
 	(response) => {
-		console.log("res ", response);
 		return response;
 	},
 	(error: AxiosError<ErrorResponse>) => {
