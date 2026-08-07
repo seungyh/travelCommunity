@@ -3,10 +3,10 @@
 		<div class="logo-area">
 			<span class="title">여행 커뮤니티</span>
 		</div>
-		<div class="header-menu-area absolute left-3/7">
+		<div class="header-menu-area left-3/7">
 			<div class="mr-[5px]!">
 				<span
-					class="btn w-[60px] text-center p-[2px]"
+					class="btn w-[60px] p-[2px]"
 					:class="[
 						route.path === '/'
 							? 'bg-teal-500 text-white'
@@ -20,7 +20,7 @@
 
 			<div class="mr-[5px]!">
 				<span
-					class="btn w-[80px] hover:bg-gray-100 text-center p-[2px]"
+					class="btn w-[80px] hover:bg-gray-100 p-[2px]"
 					:class="[
 						route.path === '/post'
 							? 'bg-teal-500 text-white'
@@ -34,23 +34,26 @@
 				>
 			</div>
 			<div>
-				<span class="btn w-[80px] hover:bg-gray-100 text-center p-[2px]"
+				<span class="btn w-[80px] hover:bg-gray-100 p-[2px]"
 					><font-awesome-icon :icon="['far', 'compass']" />여행
 					<!-- 나침반 아이콘 -->
 					<font-awesome-icon icon="chevron-down" />
 				</span>
 			</div>
 		</div>
-		<div class="header-menu-right-area absolute right-1/20">
+		<div
+			class="header-menu-right-area right-1/20"
+			:class="auth.getLogin() ? 'w-[270px]' : 'w-[170px]'"
+		>
 			<div
-				class="btn hover:bg-gray-100 w-[30px] text-center content-center mr-[10px]!"
+				class="btn hover:bg-gray-100 w-[30px] content-center mr-[10px]!"
 			>
 				<font-awesome-icon icon="magnifying-glass" />
 			</div>
 			<div v-if="auth.getLogin()" class="flex flex-nowrap items-center">
-				<router-link to="/">
+				<router-link to="/board/write">
 					<span
-						class="btn text-center mr-[15px]! p-[2px] bg-teal-500 w-[100px] hover:bg-teal-600 text-white"
+						class="btn mr-[15px]! p-[2px] bg-teal-500 w-[100px] hover:bg-teal-600 text-white"
 						><font-awesome-icon
 							icon="pencil"
 							class="mr-[5px]!"
@@ -70,7 +73,7 @@
 			<div v-else class="mr-[10px]!">
 				<router-link to="/login">
 					<span
-						class="btn text-center p-[2px] bg-teal-500 w-[100px] hover:bg-teal-600 text-white"
+						class="btn p-[2px] bg-teal-500 w-[100px] hover:bg-teal-600 text-white"
 						><font-awesome-icon
 							icon="arrow-right-to-bracket"
 							class="mr-[5px]!"

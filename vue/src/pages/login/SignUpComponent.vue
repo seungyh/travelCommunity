@@ -115,7 +115,6 @@
 <script setup lang="ts">
 import type { ErrorResponse } from "@/components/common/types/response/ErrorResponse";
 import { emailCheck } from "@/utills/ValidCheck";
-import { layer } from "@fortawesome/fontawesome-svg-core";
 import axios, { AxiosError, type AxiosResponse } from "axios";
 import { ref } from "vue";
 

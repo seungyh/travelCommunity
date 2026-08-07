@@ -1,13 +1,20 @@
 @import './base.css';
 @import "tailwindcss";
+@import "./flatpickr-custom.css";
+@import "./editor.css"; 
+@import "flatpickr/dist/flatpickr.css";
+@import "bootstrap-icons/font/bootstrap-icons.css";
+@import "./header.css";
 
 #app {
-  min-width: 1280px;
-  /* margin: 0 auto; */
-  /* padding: 2rem; */
-  /* font-weight: normal; */
+  background-color: #FCFCFD;
 }
-
+.frame {
+  width: 1280px;
+  margin: 0 auto;
+  justify-self: center;
+  border: solid 1px #E5E7EB;
+}
 a,
 .green {
   text-decoration: none;
@@ -16,25 +23,26 @@ a,
   padding: 3px;
 }
 
-/* @media (hover: hover) {
-  a:hover {
-    background-color: hsla(160, 100%, 37%, 0.2);
-  }
-} */
-
-/* @media (min-width: 1024px) {
-  body {
-    display: flex;
-    place-items: center;
-  }
-
-  #app {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    padding: 0 2rem;
-  }
-} */
-
 .btn {
   border-radius: 7px;
+  text-align: center;
+  cursor: pointer;
+}
+.white-btn{
+  border-radius: 7px;
+  text-align: center;
+  cursor: pointer;
+  border: solid 1px #79717136;
+  background-color: white;
+}
+/* input 기본 css 제거 */
+.custom-input {
+  border: none;
+	outline: none;
+}
+.border-gray {
+  border: 1px solid #e5e7eb;
+}
+.hover-green:hover {
+  border-color: #10b981; /* 초록색 */
 }

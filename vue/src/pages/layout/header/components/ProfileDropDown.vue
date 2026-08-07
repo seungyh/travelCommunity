@@ -1,7 +1,7 @@
 <template>
 	<div class="profile-img" @click.stop>
-		<div>
-			<img :src="src" alt="Avatar" />
+		<div class="absolute">
+			<img :src="src" alt="Avatar" class="w-12 h-12 object-cover" />
 			<Transition>
 				<div
 					v-if="openDropdownType == DropdownType.PROFILE"
@@ -80,6 +80,7 @@ const src = computed(() => {
 </script>
 <style scoped>
 .profile-img {
+	position: relative;
 	border-radius: 25px;
 	width: 50px;
 	height: 50px;

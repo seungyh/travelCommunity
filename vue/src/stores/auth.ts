@@ -56,11 +56,15 @@ export const useAuthStore = defineStore("auth", () => {
 		axios
 			.get("/web/api/account/token/login")
 			.then((res: AxiosResponse<LoginResponse>) => {
-				console.log("res ", res);
-				successLogin(res.data);
+				if (res.data.userId) {
+					successLogin(res.data);
+				} else {
+					// userId가 null이면 로그아웃 처리
+					setLogout();
+				}
 			})
-			.catch((error: AxiosError<ErrorResponse>) => {
-				console.log(error);
+			.catch(() => {
+				// 401은 인터셉터에서 이미 로그아웃 처리
 			});
 	};
 	// 로그인 성공 후 처리
@@ -72,6 +76,7 @@ export const useAuthStore = defineStore("auth", () => {
 		router.push("/");
 	};
 	return {
+		isLogin,
 		login,
 		setLogin,
 		setLogout,

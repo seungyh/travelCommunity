@@ -7,11 +7,15 @@ import {
 	faBell,
 	faEnvelope,
 	faCircleUser,
+	faFloppyDisk,
+	faPaperPlane,
+	faTrashCan,
 } from "@fortawesome/free-regular-svg-icons";
 import {
+	faXmark,
+	faChevronDown,
 	faMagnifyingGlass,
 	faPencil,
-	faChevronDown,
 	faChevronUp,
 	faArrowRightToBracket,
 	faLock,
@@ -21,6 +25,11 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 library.add(
+	faTrashCan,
+	faXmark,
+	faChevronDown,
+	faPaperPlane,
+	faFloppyDisk,
 	faUser,
 	faHouse,
 	faNewspaper,
