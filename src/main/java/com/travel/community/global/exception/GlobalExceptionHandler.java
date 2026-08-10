@@ -2,11 +2,12 @@ package com.travel.community.global.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import com.travel.community.global.exception.dto.BusinessException;
-import com.travel.community.global.exception.dto.ErrorResponse;
+import com.travel.community.pages.common.dto.response.ErrorResponse;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +41,46 @@ public class GlobalExceptionHandler {
         log.error("RuntimeException at URL: {} - error:", request.getRequestURI(), e);
         ErrorResponse errorResponse = new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.toString(), e.getMessage());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(errorResponse);
+    }
+
+    /**
+     * 유효하지 않은 요청 정보
+     * 
+     * @param e
+     * @param request
+     * @return
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    protected ResponseEntity<ErrorResponse> handleMethodArgumentNotValid(MethodArgumentNotValidException e,
+            HttpServletRequest request) {
+
+        log.error(
+                "Request validation failed at URL: {} - {}",
+                request.getRequestURI(),
+                e.getMessage());
+
+        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.toString(), e.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(errorResponse);
+    }
+
+    /**
+     * 유효하지 않은 enum 요청 정보 (enum 파싱 실패)
+     * 
+     * @param e
+     * @param request
+     * @return
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    protected ResponseEntity<ErrorResponse> handleHttpMessageNotReadable(
+            HttpMessageNotReadableException e,
+            HttpServletRequest request) {
+
+        log.error("Request body parsing failed. uri={}", request.getRequestURI(), e);
+
+        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.toString(), e.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(errorResponse);
     }
 }

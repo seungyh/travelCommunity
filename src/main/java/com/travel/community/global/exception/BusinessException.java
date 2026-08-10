@@ -1,4 +1,4 @@
-package com.travel.community.global.exception.dto;
+package com.travel.community.global.exception;
 
 import lombok.Getter;
 
