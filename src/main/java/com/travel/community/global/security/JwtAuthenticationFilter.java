@@ -4,14 +4,19 @@ import java.io.IOException;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import com.travel.community.global.exception.dto.BusinessException;
 import com.travel.community.global.security.jwt.JwtManager;
-import com.travel.community.global.security.jwt.dto.TokenDto;
-import com.travel.community.global.security.jwt.enums.JwtErrorCode;
+import com.travel.community.global.security.jwt.exception.CustomAuthenticationEntryPoint;
+import com.travel.community.global.security.jwt.exception.JwtErrorCode;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -28,6 +33,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 	private final AntPathMatcher pathMatcher = new AntPathMatcher();
 	private final JwtManager jwtManager;
+	private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
 
 	// 로그인 정보 필요한 기능은 token filter에서 검사
 	@Override
@@ -41,22 +47,48 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 				return;
 			}
 		}
-		TokenDto tokenDto = null;
+		String userId = null;
 		try {
 			String token = jwtManager.getJwt(request);
-			tokenDto = jwtManager.getTokenDto(token);
+			userId = jwtManager.getUserId(token);
+
+			// spring security 권한 인증 객체 ROLE_USER
+			List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
+			Authentication authentication = new UsernamePasswordAuthenticationToken(
+					userId,
+					null,
+					authorities);
+			SecurityContextHolder.getContext()
+					.setAuthentication(authentication);
 
 		} catch (Exception e) {
 			tokenDeleteProcess(response);
-			throw new BusinessException(JwtErrorCode.INVALID_JWT);
+			SecurityContextHolder.clearContext();
+
+			customAuthenticationEntryPoint.commence(
+					request,
+					response,
+					new BadCredentialsException(
+							JwtErrorCode.INVALID_JWT.getErrorMessage(),
+							e));
+
+			return;
+
 		}
 
-		// jwt에 userId 미존재
-		if (tokenDto.getUserId() != null) {
+		// userId 미존재
+		if (userId != null) {
 			filterChain.doFilter(request, response);
 		} else {
 			tokenDeleteProcess(response);
-			throw new BusinessException(JwtErrorCode.INVALID_JWT);
+			customAuthenticationEntryPoint.commence(
+					request,
+					response,
+					new BadCredentialsException(
+							JwtErrorCode.INVALID_JWT.getErrorMessage(),
+							null));
+
+			return;
 
 		}
 
@@ -69,7 +101,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		HttpServletResponse httpResponse = (HttpServletResponse) response;
 		httpResponse.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 		httpResponse.setContentType("application/json;charset=UTF-8");
-		httpResponse.getWriter().write("{\"error\": \"Invalid or Expired Token\"}");
 		jwtManager.getCookieToDelete(response);
 	}
 

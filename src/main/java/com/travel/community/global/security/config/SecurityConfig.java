@@ -13,6 +13,7 @@ import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 
 import com.travel.community.global.security.JwtAuthenticationFilter;
+import com.travel.community.global.security.jwt.exception.CustomAuthenticationEntryPoint;
 import com.travel.community.pages.oauth.service.CustomOAuth2UserService;
 import com.travel.community.pages.oauth.service.OAuth2SuccessHandler;
 
@@ -29,6 +30,7 @@ public class SecurityConfig {
 	private final JwtAuthenticationFilter jwtAuthenticationFilter;
 	private final CustomOAuth2UserService customOAuth2UserService;
 	private final OAuth2SuccessHandler oauth2SuccessHandler;
+	private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
 
 	@Bean
 	public PasswordEncoder passwordEncoder() {
@@ -47,6 +49,9 @@ public class SecurityConfig {
 						.permitAll()
 						.anyRequest()
 						.authenticated())
+				// filter에서 exception 발생 처리
+				.exceptionHandling(exception -> exception
+						.authenticationEntryPoint(customAuthenticationEntryPoint))
 				.addFilterBefore(
 						jwtAuthenticationFilter,
 						UsernamePasswordAuthenticationFilter.class)
