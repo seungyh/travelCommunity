@@ -32,6 +32,7 @@ axios.interceptors.response.use(
 			// 인증 에러 재로그인 필요 세션 삭제
 			sessionStorage.removeItem("userId");
 			auth.setLogout();
+			router.push("/");
 			return Promise.reject(error);
 		}
 		throw error;

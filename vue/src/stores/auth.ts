@@ -49,6 +49,7 @@ export const useAuthStore = defineStore("auth", () => {
 			})
 			.catch((error: AxiosError<ErrorResponse>) => {
 				console.log(error);
+				alert(error.response?.data.errorMessage);
 			});
 	};
 	// jwt 토큰으로 로그인
