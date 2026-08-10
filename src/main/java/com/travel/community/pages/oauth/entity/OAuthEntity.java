@@ -1,7 +1,5 @@
 package com.travel.community.pages.oauth.entity;
 
-import java.time.LocalDateTime;
-import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import jakarta.persistence.Column;
@@ -39,16 +37,7 @@ public class OAuthEntity {
     @Column(nullable = false)
     private String provider; // 플랫폼
 
-    @Column(name = "nickname", nullable = false)
-    private String nickName; // 처음엔 임의로 설정
-
     @Column(nullable = false)
-    private String email; // 이메일
+    private String userId; // users 테이블의 id
 
-    // @Column(name = "linked_at", updatable = false)
-    // private LocalDateTime linkedAt; // 계정 연동일
-
-    @CreatedDate
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt; // 등록일
 }

@@ -13,7 +13,7 @@ import com.travel.community.pages.account.dto.request.SignUpRequest;
 import com.travel.community.pages.account.dto.response.LoginResponse;
 import com.travel.community.pages.account.service.AccountService;
 import com.travel.community.pages.account.service.NickNameCreator;
-import com.travel.community.pages.common.dto.CommonResponse;
+import com.travel.community.pages.common.dto.response.CommonResponse;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -36,7 +36,7 @@ public class AccountController {
      * @return
      */
     @PostMapping("/login")
-    public ResponseEntity<CommonResponse> login(HttpServletResponse response,
+    public ResponseEntity<LoginResponse> login(HttpServletResponse response,
             @Valid @RequestBody LoginRequest loginInfo) {
         return ResponseEntity.ok(service.login(loginInfo, response));
     }

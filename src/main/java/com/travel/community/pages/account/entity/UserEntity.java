@@ -12,6 +12,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -33,6 +35,9 @@ import lombok.NoArgsConstructor;
 public class UserEntity {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
     @Column(name = "user_id", nullable = false, unique = true)
     private String userId; // 사용자 id
 
@@ -62,4 +67,8 @@ public class UserEntity {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt; // 자기 정보 변경일
+
+    public void setUserId(Long id) {
+        this.id = id;
+    }
 }

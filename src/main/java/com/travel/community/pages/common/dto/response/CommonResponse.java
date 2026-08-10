@@ -1,4 +1,4 @@
-package com.travel.community.pages.common.dto;
+package com.travel.community.pages.common.dto.response;
 
 import lombok.Builder;
 import lombok.Getter;
