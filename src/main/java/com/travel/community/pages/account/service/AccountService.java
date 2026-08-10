@@ -1,23 +1,23 @@
 package com.travel.community.pages.account.service;
 
+import java.util.Optional;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.travel.community.global.exception.dto.BusinessException;
+import com.travel.community.global.exception.BusinessException;
 import com.travel.community.global.security.jwt.JwtManager;
 import com.travel.community.global.security.jwt.dto.TokenDto;
 import com.travel.community.pages.account.dto.request.LoginRequest;
 import com.travel.community.pages.account.dto.request.SignUpRequest;
 import com.travel.community.pages.account.dto.response.LoginResponse;
 import com.travel.community.pages.account.entity.UserEntity;
-import com.travel.community.pages.account.enums.AccountErrorCode;
 import com.travel.community.pages.account.enums.Roles;
 import com.travel.community.pages.account.enums.UserResponseMsg;
+import com.travel.community.pages.account.exception.enums.AccountErrorCode;
 import com.travel.community.pages.account.repository.AccountRepository;
-import com.travel.community.pages.common.dto.CommonResponse;
-import com.travel.community.pages.oauth.entity.OAuthEntity;
+import com.travel.community.pages.common.dto.response.CommonResponse;
 import com.travel.community.pages.oauth.enums.ProviderType;
-import com.travel.community.pages.oauth.repository.OAuthRepository;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -30,7 +30,6 @@ import lombok.extern.slf4j.Slf4j;
 public class AccountService {
 
     private final AccountRepository accountRepository;
-    private final OAuthRepository oAuthRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtManager jwtManager;
 
@@ -61,19 +60,19 @@ public class AccountService {
      * @param response
      * @return
      */
-    public CommonResponse login(LoginRequest loginInfo, HttpServletResponse response) {
-        UserEntity user = accountRepository.findByUserId(loginInfo.getUserId()).get();
-        if (user == null) {
-            return CommonResponse.builder().result(false).message(UserResponseMsg.WRONG_LOGIN.getMessage()).build();
-        }
+    public LoginResponse login(LoginRequest loginInfo, HttpServletResponse response) {
+        UserEntity user = accountRepository.findByUserId(loginInfo.getUserId())
+                .orElseThrow(() -> new BusinessException(AccountErrorCode.INVALID_ACCOUNT));
         boolean isPwMatch = passwordEncoder.matches(loginInfo.getPassword(), user.getPassword());
+
         if (!isPwMatch) {
-            return CommonResponse.builder().result(false).message(UserResponseMsg.WRONG_LOGIN.getMessage()).build();
+            throw new BusinessException(AccountErrorCode.INVALID_ACCOUNT);
         }
         String token = jwtManager.createJwt(user.getUserId(), ProviderType.LOCAL);
         jwtManager.addCookie(response, token);
 
-        return CommonResponse.builder().result(true).message(UserResponseMsg.LOGIN_SUCCESS.getMessage()).build();
+        return LoginResponse.builder().email(user.getEmail()).nickName(user.getNickName()).userId(user.getUserId())
+                .build();
     }
 
     public CommonResponse logout(HttpServletResponse response) {
@@ -82,30 +81,20 @@ public class AccountService {
     }
 
     public LoginResponse tokenLogin(HttpServletRequest request, HttpServletResponse response) {
-        TokenDto tokenDto = null;
+        String userId = null;
         try {
             String jwt = jwtManager.getJwt(request);
-            tokenDto = jwtManager.getTokenDto(jwt);
+            userId = jwtManager.getUserId(jwt);
         } catch (BusinessException e) {
             jwtManager.getCookieToDelete(response);
             return null;
         }
-        String email = null;
-        String nickName = null;
-        // 일반 로그인이면 User 테이블 조회
-        if (tokenDto.getType().equals(ProviderType.LOCAL)) {
-            UserEntity userEntity = accountRepository.findByUserId(tokenDto.getUserId()).get();
-            email = userEntity.getEmail();
-            nickName = userEntity.getNickName();
-            return LoginResponse.builder().userId(tokenDto.getUserId()).email(email).nickName(nickName).build();
-        }
+        // Users 테이블 조회
+        UserEntity userEntity = accountRepository.findByUserId(userId).get();
+        String email = userEntity.getEmail();
+        String nickName = userEntity.getNickName();
+        return LoginResponse.builder().userId(userId).email(email).nickName(nickName).build();
 
-        // 소셜 로그인이면 oauth 테이블 조회
-        OAuthEntity oauthEntity = oAuthRepository.findById(tokenDto.getUserId());
-        email = oauthEntity.getEmail();
-        nickName = oauthEntity.getNickName();
-
-        return LoginResponse.builder().userId(tokenDto.getUserId()).email(email).nickName(nickName).build();
     }
 
 }

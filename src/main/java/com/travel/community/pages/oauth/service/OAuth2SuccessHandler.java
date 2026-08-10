@@ -7,11 +7,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 
-import com.travel.community.global.exception.dto.BusinessException;
+import com.travel.community.global.exception.BusinessException;
 import com.travel.community.global.security.jwt.JwtManager;
 import com.travel.community.pages.oauth.dto.CustomOAuth2User;
-import com.travel.community.pages.oauth.enums.OAuthErrorCode;
 import com.travel.community.pages.oauth.enums.ProviderType;
+import com.travel.community.pages.oauth.exception.OAuthErrorCode;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -45,7 +45,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
         }
 
-        String token = jwtManager.createJwt(oauth2User.getId().toString(), type);
+        String token = jwtManager.createJwt(oauth2User.getUserId().toString(), type);
         jwtManager.addCookie(response, token);
 
         response.sendRedirect(SUCCESS_URL);

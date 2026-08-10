@@ -10,9 +10,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.WebUtils;
 
-import com.travel.community.global.exception.dto.BusinessException;
-import com.travel.community.global.security.jwt.dto.TokenDto;
-import com.travel.community.global.security.jwt.enums.JwtErrorCode;
+import com.travel.community.global.exception.BusinessException;
+import com.travel.community.global.security.jwt.exception.JwtErrorCode;
 import com.travel.community.pages.oauth.enums.ProviderType;
 
 import io.jsonwebtoken.Claims;
@@ -73,7 +72,7 @@ public class JwtManager {
      * @return
      * @throws Exception
      */
-    public TokenDto getTokenDto(String jwtToken) {
+    public String getUserId(String jwtToken) {
         // 헤더에서 JWT 추출
         if (jwtToken == null || jwtToken.length() == 0) {
             return null;
@@ -83,12 +82,7 @@ public class JwtManager {
             // jwt 토큰에서 claims 추출
             Claims claims = Jwts.parser().verifyWith(key).build().parseSignedClaims(jwtToken).getPayload();
 
-            // userId 추출
-            String userId = claims.getSubject();
-            // 로그인 플랫폼 추출
-            ProviderType type = ProviderType.valueOf(claims.get("provider", String.class));
-
-            return TokenDto.builder().token(jwtToken).userId(userId).type(type).build();
+            return claims.getSubject();
 
         } catch (ExpiredJwtException e) {
             log.warn("토큰 만료: {}", e.getMessage());
