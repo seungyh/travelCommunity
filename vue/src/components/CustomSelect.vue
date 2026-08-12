@@ -41,7 +41,7 @@ import type { SelectItem } from "./common/types/SelectItem";
 
 const props = defineProps(["placeholder", "item", "items"]);
 const emit = defineEmits<{
-	(e: "change", item: SelectItem): void;
+	(e: "update:modelValue", value: string): void; // 커스텀 select box v-model로 연결하기 위해 값 emit
 }>();
 
 const isMenuOpen = ref(false);
@@ -53,7 +53,7 @@ const selectedItem = ref<SelectItem>({
 const select = (index: number | string) => {
 	selectedItem.value = props.items[index]; // 결과 저장
 	isMenuOpen.value = false; // 메뉴창 닫음
-	emit("change", selectedItem.value);
+	emit("update:modelValue", selectedItem.value.value);
 };
 // 바탕 클릭 시 드롭다운 닫음
 const handleBodyClick = () => {

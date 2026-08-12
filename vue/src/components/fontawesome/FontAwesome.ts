@@ -22,9 +22,13 @@ import {
 	faEye,
 	faEyeSlash,
 	faRightFromBracket,
+	faPlus,
+	faArrowLeft,
 } from "@fortawesome/free-solid-svg-icons";
 
 library.add(
+	faArrowLeft,
+	faPlus,
 	faTrashCan,
 	faXmark,
 	faChevronDown,

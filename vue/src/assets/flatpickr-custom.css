@@ -1,0 +1,12 @@
+/* flat pickr css */
+.flatpickr-input,
+.form-control {
+    outline: none;
+}
+
+.flatpickr-input:focus,
+.form-control:focus {
+    outline: none;
+    box-shadow: none;
+    border-color: #10b981;
+}

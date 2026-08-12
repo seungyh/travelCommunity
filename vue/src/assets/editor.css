@@ -1,0 +1,417 @@
+.ProseMirror {
+    outline: none;
+}
+
+/* tag css */
+.tag-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+
+	margin: 0 3px;
+	padding: 4px 8px;
+
+	color: #047857;
+	background: #ecfdf5;
+	border: 1px solid #a7f3d0;
+	border-radius: 9999px;
+
+	font-size: 14px;
+	line-height: 1;
+	vertical-align: middle;
+}
+
+.tag-text {
+	white-space: nowrap;
+}
+
+.tag-remove-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: #059669;
+
+	font-size: 12px;
+	cursor: pointer;
+}
+
+.tag-remove-button:hover {
+	color: #dc2626;
+}
+.tag-editor {
+	padding: 5px;
+	border: 1px solid #d1d5db;
+	border-radius: 8px;
+	outline: none;
+}
+
+.tag-editor:hover {
+	border-color: #10b981;
+}
+
+.tag-editor p {
+	margin: 0;
+}
+
+/* 툴바 전체 컨테이너 */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-bottom: none;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  user-select: none;
+}
+
+/* 일반 버튼 & 드롭다운 헤더 공통 스타일 */
+.toolbar-btn, .toolbar-dropdown-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  font-size: 14px;
+  color: #334155;
+  background-color: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+/* 마우스 호버 효과 */
+.toolbar-btn:hover, .toolbar-dropdown-trigger:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+/* 기능이 활성화되었을 때 (Tiptap의 .is-active 대응) */
+.toolbar-btn.is-active, .toolbar-dropdown-trigger.is-active {
+  background-color: #e2e8f0;
+  color: #2563eb;
+  font-weight: 600;
+}
+
+/* 버튼 비활성화 상태 */
+.toolbar-btn:disabled {
+  color: #cbd5e1;
+  cursor: not-allowed;
+  background-color: transparent;
+}
+
+/* 기능 그룹을 나누는 세로 구분선 */
+.toolbar-divider {
+  width: 1px;
+  height: 18px;
+  background-color: #e2e8f0;
+  margin: 0 6px;
+}
+
+/* 폰트 크기나 문단 스타일용 드롭다운 컨테이너 */
+.toolbar-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+/* 드롭다운 내부 화살표 표시 */
+.toolbar-dropdown-trigger::after {
+  content: "";
+  display: inline-block;
+  margin-left: 6px;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 4px solid #64748b;
+  vertical-align: middle;
+}
+
+/* 글자 색상 선택용 컬러 피커 버튼 (input type="color") */
+.toolbar-color-picker {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: 28px;
+  height: 28px;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  padding: 0;
+  cursor: pointer;
+  background: none;
+}
+.toolbar-color-picker::-webkit-color-swatch-wrapper {
+  padding: 2px;
+}
+.toolbar-color-picker::-webkit-color-swatch {
+  border: none;
+  border-radius: 2px;
+}
+
+/* 굵게, 기울임, 밑줄, 취소선 */
+.tiptap b, .tiptap strong { font-weight: 700; }
+.tiptap i, .tiptap em { font-style: italic; }
+.tiptap u { text-decoration: underline; }
+.tiptap s, .tiptap del { text-decoration: line-through; }
+
+/* 제목 스타일 (H1, H2, H3) */
+.tiptap h1 {
+  font-size: 2em;
+  font-weight: 700;
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+.tiptap h2 {
+  font-size: 1.5em;
+  font-weight: 600;
+  margin-top: 18px;
+  margin-bottom: 8px;
+}
+.tiptap h3 {
+  font-size: 1.25em;
+  font-weight: 600;
+  margin-top: 16px;
+  margin-bottom: 6px;
+}
+
+/* 정렬 (TextAlign 확장 기능 대응) */
+.tiptap [style*="text-align: left"] { text-align: left !important; }
+.tiptap [style*="text-align: center"] { text-align: center !important; }
+.tiptap [style*="text-align: right"] { text-align: right !important; }
+
+/* 리스트 (•, 1.) */
+.tiptap ul {
+  list-style-type: disc;
+  padding-left: 24px;
+  margin: 8px 0;
+}
+.tiptap ol {
+  list-style-type: decimal;
+  padding-left: 24px;
+  margin: 8px 0;
+}
+.tiptap li {
+  margin: 4px 0;
+}
+
+/* 인용구 (” 버튼 대응) */
+.tiptap blockquote {
+  border-left: 4px solid #70eea9; /* 왼쪽에 깔끔한 회색 수직 바 */
+  padding-left: 16px;
+  color: #64748b;
+  font-style: italic;
+  margin: 16px 0;
+}
+
+/* 링크 */
+.tiptap a {
+  color: #2563eb;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+
+/* Basic editor styles */
+.tiptap {
+  :first-child {
+    margin-top: 0;
+  }
+  [data-resize-container][data-node="image"] {
+    display: flex;
+    justify-content: center;
+  }
+
+  img {
+    display: block;
+  }
+
+  [data-resize-handle] {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: 2px;
+    z-index: 10;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.8);
+    }
+
+    /* Corner handles */
+    &[data-resize-handle='top-left'],
+    &[data-resize-handle='top-right'],
+    &[data-resize-handle='bottom-left'],
+    &[data-resize-handle='bottom-right'] {
+      width: 8px;
+      height: 8px;
+    }
+
+    &[data-resize-handle='top-left'] {
+      top: -4px;
+      left: -4px;
+      cursor: nwse-resize;
+    }
+
+    &[data-resize-handle='top-right'] {
+      top: -4px;
+      right: -4px;
+      cursor: nesw-resize;
+    }
+
+    &[data-resize-handle='bottom-left'] {
+      bottom: -4px;
+      left: -4px;
+      cursor: nesw-resize;
+    }
+
+    &[data-resize-handle='bottom-right'] {
+      bottom: -4px;
+      right: -4px;
+      cursor: nwse-resize;
+    }
+
+    /* Edge handles */
+    &[data-resize-handle='top'],
+    &[data-resize-handle='bottom'] {
+      height: 6px;
+      left: 8px;
+      right: 8px;
+    }
+
+    &[data-resize-handle='top'] {
+      top: -3px;
+      cursor: ns-resize;
+    }
+
+    &[data-resize-handle='bottom'] {
+      bottom: -3px;
+      cursor: ns-resize;
+    }
+
+    &[data-resize-handle='left'],
+    &[data-resize-handle='right'] {
+      width: 6px;
+      top: 8px;
+      bottom: 8px;
+    }
+
+    &[data-resize-handle='left'] {
+      left: -3px;
+      cursor: ew-resize;
+    }
+
+    &[data-resize-handle='right'] {
+      right: -3px;
+      cursor: ew-resize;
+    }
+  }
+
+  [data-resize-state='true'] [data-resize-wrapper] {
+    outline: 1px solid rgba(0, 0, 0, 0.25);
+    border-radius: 0.125rem;
+  }
+}
+
+/* 코드 블록 (</> 버튼 대응) */
+.tiptap pre {
+  background-color: #4d525e;
+  color: #f8fafc;
+  padding: 12px 16px;
+  border-radius: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 14px;
+  margin: 16px 0;
+  overflow-x: auto;
+}
+
+/* 드롭다운 전체 컨테이너 */
+.font-size-dropdown {
+  position: relative;
+  display: inline-block;
+  user-select: none;
+}
+
+/* 현재 선택된 폰트 크기를 보여주는 메인 버튼 (워드 상단 입력창 형태) */
+.font-size-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 56px;           /* 숫자가 들어가는 표준 너비 */
+  height: 32px;
+  padding: 0 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #334155;
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1; /* 테두리가 명시적으로 들어간 워드 스타일 */
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.font-size-trigger:hover {
+  border-color: #94a3b8;
+  background-color: #f8fafc;
+}
+
+/* 삼각형 화살표 ∨ */
+.font-size-trigger::after {
+  content: "";
+  display: inline-block;
+  border-left: 3.5px solid transparent;
+  border-right: 3.5px solid transparent;
+  border-top: 4px solid #64748b;
+  margin-left: 4px;
+}
+
+/* 버튼 클릭 시 아래로 튀어나오는 폰트 크기 목록 상자 */
+.font-size-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 50;
+  display: none;        /* 활성화 시 스크립트로 블록 처리 혹은 Vue 조건부 노출 */
+  width: 64px;
+  max-height: 200px;    /* 값이 많을 때 워드처럼 내부 스크롤 생성 */
+  overflow-y: auto;
+  margin-top: 4px;
+  padding: 4px 0;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* 드롭다운 내부의 각각의 숫자 아이템 버튼 */
+.font-size-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 28px;
+  padding: 0 10px;
+  font-size: 13px;
+  color: #334155;
+  background: transparent;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.font-size-item:hover {
+  background-color: #f1f5f9; /* 마우스 올렸을 때 흐린 회색 */
+  color: #0f172a;
+}
+
+/* 현재 본문 글자 크기와 똑같은 숫자는 체크 표시되거나 푸르게 하이라이트 */
+.font-size-item.is-active {
+  background-color: #e0f2fe;
+  color: #0284c7;
+  font-weight: 600;
+}
+
