@@ -28,8 +28,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-	@Value("${filter.exclude-address}")
-	private List<String> EXCLUDE_ADDRESS;
+	@Value("${filter.auth-address}")
+	private List<String> AUTH_ADDRESS;
 
 	private final AntPathMatcher pathMatcher = new AntPathMatcher();
 	private final JwtManager jwtManager;
@@ -41,56 +41,54 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 			FilterChain filterChain) throws ServletException, IOException {
 		String uri = request.getRequestURI();
 
-		for (String pattern : EXCLUDE_ADDRESS) {
-			if (pathMatcher.match(pattern, uri)) {
-				filterChain.doFilter(request, response); // 검증 로직을 건너뛰고 다음 필터로 진행
-				return;
+		for (String pattern : AUTH_ADDRESS) {
+			if (pathMatcher.match(pattern, uri)) { // 로그인 인증이 필요한 url만 체크
+
+				String userId = null;
+				try {
+					userId = jwtManager.getUserId(request);
+
+					// spring security 권한 인증 객체 ROLE_USER
+					List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
+					Authentication authentication = new UsernamePasswordAuthenticationToken(
+							userId,
+							null,
+							authorities);
+					SecurityContextHolder.getContext()
+							.setAuthentication(authentication);
+
+				} catch (Exception e) {
+					tokenDeleteProcess(response);
+					SecurityContextHolder.clearContext();
+
+					customAuthenticationEntryPoint.commence(
+							request,
+							response,
+							new BadCredentialsException(
+									JwtErrorCode.INVALID_JWT.getErrorMessage(),
+									e));
+
+					return;
+
+				}
+
+				// userId 미존재
+				if (userId == null) {
+					tokenDeleteProcess(response);
+					customAuthenticationEntryPoint.commence(
+							request,
+							response,
+							new BadCredentialsException(
+									JwtErrorCode.INVALID_JWT.getErrorMessage(),
+									null));
+
+					return;
+
+				}
 			}
 		}
-		String userId = null;
-		try {
-			String token = jwtManager.getJwt(request);
-			userId = jwtManager.getUserId(token);
-
-			// spring security 권한 인증 객체 ROLE_USER
-			List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
-			Authentication authentication = new UsernamePasswordAuthenticationToken(
-					userId,
-					null,
-					authorities);
-			SecurityContextHolder.getContext()
-					.setAuthentication(authentication);
-
-		} catch (Exception e) {
-			tokenDeleteProcess(response);
-			SecurityContextHolder.clearContext();
-
-			customAuthenticationEntryPoint.commence(
-					request,
-					response,
-					new BadCredentialsException(
-							JwtErrorCode.INVALID_JWT.getErrorMessage(),
-							e));
-
-			return;
-
-		}
-
-		// userId 미존재
-		if (userId != null) {
-			filterChain.doFilter(request, response);
-		} else {
-			tokenDeleteProcess(response);
-			customAuthenticationEntryPoint.commence(
-					request,
-					response,
-					new BadCredentialsException(
-							JwtErrorCode.INVALID_JWT.getErrorMessage(),
-							null));
-
-			return;
-
-		}
+		filterChain.doFilter(request, response);
+		return;
 
 	}
 

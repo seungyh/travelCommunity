@@ -24,8 +24,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-	@Value("${filter.exclude-address}")
-	private String[] EXCLUDE_ADDRESS;
+	@Value("${filter.auth-address}")
+	private String[] AUTH_ADDRESS;
 
 	private final JwtAuthenticationFilter jwtAuthenticationFilter;
 	private final CustomOAuth2UserService customOAuth2UserService;
@@ -45,10 +45,10 @@ public class SecurityConfig {
 						.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
 
 				.authorizeHttpRequests(auth -> auth
-						.requestMatchers(EXCLUDE_ADDRESS)
-						.permitAll()
+						.requestMatchers(AUTH_ADDRESS)
+						.authenticated()
 						.anyRequest()
-						.authenticated())
+						.permitAll())
 				// filter에서 exception 발생 처리
 				.exceptionHandling(exception -> exception
 						.authenticationEntryPoint(customAuthenticationEntryPoint))

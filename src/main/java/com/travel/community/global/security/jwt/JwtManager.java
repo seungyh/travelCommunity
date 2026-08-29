@@ -100,6 +100,17 @@ public class JwtManager {
     }
 
     /**
+     * HttpServletRequest에서 userId 리턴
+     * 
+     * @param request
+     * @return
+     */
+    public String getUserId(HttpServletRequest request) {
+        String jwt = getJwt(request);
+        return getUserId(jwt);
+    }
+
+    /**
      * 쿠키 삭제
      *
      * @return
