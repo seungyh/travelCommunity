@@ -8,7 +8,7 @@ import lombok.Getter;
 public enum BoardFileType {
     FEATURE("대표 이미지"),
     EXTRA("추가 이미지"),
-    ;
+    CONTENT("내용 이미지");
 
     private String description;
 }

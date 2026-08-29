@@ -33,13 +33,15 @@ public class BoardImageEntity extends CommonFileEntity {
     @Column(nullable = false)
     private BoardFileType type; // 이미지 타입
 
-    public static BoardImageEntity create(String originalName, String path, Long boardId, BoardFileType type) {
+    public static BoardImageEntity create(String originalName, String path, Long boardId, String fileName,
+            BoardFileType type) {
         BoardImageEntity file = new BoardImageEntity();
 
         file.originalName = originalName;
         file.path = path;
         file.boardId = boardId;
         file.type = type;
+        file.fileName = fileName;
 
         return file;
     }

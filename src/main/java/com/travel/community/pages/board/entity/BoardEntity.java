@@ -2,9 +2,6 @@ package com.travel.community.pages.board.entity;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-
-import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import com.travel.community.pages.board.enums.BoardStatus;
@@ -45,14 +42,16 @@ public class BoardEntity {
     private String title; // 제목
 
     @Column(columnDefinition = "TEXT")
-    private String content; // 내용
+    private String content; // 내용 text 만
+
+    @Column(columnDefinition = "TEXT")
+    private String contentHtml; // 내용 html 전체
 
     @Builder.Default
     @Column(name = "like_count", nullable = false)
     private Integer likeCount = 0; // 좋아요 수
 
     @Column(name = "created_at", nullable = false, updatable = false)
-    @CreatedDate
     private LocalDateTime createdAt; // 생성일 날짜 + 시간
 
     @Column(name = "updated_at", nullable = false)
@@ -70,7 +69,7 @@ public class BoardEntity {
     @Enumerated(EnumType.STRING)
     @Builder.Default
     @Column(nullable = false, length = 20)
-    private BoardStatus status = BoardStatus.DRAFT; // 게시글 상태
+    private BoardStatus status = BoardStatus.PUBLISHED; // 게시글 상태
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -89,4 +88,25 @@ public class BoardEntity {
 
     @Column(nullable = false)
     private String category; // 카테고리
+
+    public void setLikeCount(int likeCount) {
+        this.likeCount = likeCount;
+    }
+
+    // Dirty Checking을 통한 게시글 정보 변경
+    public void changeValue(String title, String content, String contentHtml, String place, LocalDate travelStartAt,
+            LocalDate travelEndAt, BoardStatus status, BoardVisibilityType visibility, String category,
+            LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this.title = title;
+        this.content = content;
+        this.contentHtml = contentHtml;
+        this.place = place;
+        this.travelStartAt = travelStartAt;
+        this.travelEndAt = travelEndAt;
+        this.status = status;
+        this.visibility = visibility;
+        this.category = category;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
 }

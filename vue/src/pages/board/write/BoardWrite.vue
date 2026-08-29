@@ -6,12 +6,15 @@
 				<span>여행의 소중한 순간을 기록하세요</span>
 			</div>
 			<div class="flex flex-row">
-				<button class="white-btn h-[40px] w-[100px] mr-2">
+				<button
+					@click="draft"
+					class="white-btn h-[40px] w-[100px] mr-2"
+				>
 					<font-awesome-icon :icon="['far', 'floppy-disk']" />
 					임시저장
 				</button>
 				<button
-					@click="save"
+					@click="publish"
 					class="btn bg-teal-500 h-[40px] w-[100px] text-white"
 				>
 					<font-awesome-icon :icon="['far', 'paper-plane']" />
@@ -91,8 +94,7 @@
 				<div class="w-[50%]">
 					<span class="text-gray-400">태그</span>
 					<TagEditor
-						:tags="[]"
-						@updateTags="updateTags"
+						v-model="boardData.tags"
 						class="hover-green min-h-[40px] rounded-md w-[95%]"
 					></TagEditor>
 				</div>
@@ -139,7 +141,7 @@
 								변경
 							</button>
 							<button
-								@click="deleteFeaturedImage"
+								@click="deleteFeatureImage"
 								class="white-btn w-[80px] h-[40px] text-red-500"
 							>
 								<font-awesome-icon
@@ -169,7 +171,7 @@
 						</div>
 					</div>
 					<input
-						@change="handleFeatureImgAdded"
+						@change="uploadImg($event, 'FEATURE')"
 						ref="fileInput"
 						type="file"
 						:multiple="false"
@@ -184,7 +186,10 @@
 				<div
 					class="w-full min-h-[500px] rounded-md border-gray mt-2 hover-green"
 				>
-					<ContentEditor v-model="boardData.content" />
+					<ContentEditor
+						v-model="boardData.contentValue"
+						@draft="draft"
+					/>
 				</div>
 			</div>
 			<!-- 추가 이미지 -->
@@ -202,14 +207,14 @@
 				</div>
 				<div class="flex flex-wrap mt-2">
 					<div
-						v-for="(src, index) in extraSrcs"
+						v-for="(id, index) in extraImgIds"
 						class="mr-2 mb-2 border-gray"
 					>
 						<div
 							class="w-[250px] h-[200px] text-center content-center relative group"
 						>
 							<img
-								:src="src"
+								:src="`/web/api/board/file/${id}`"
 								class="w-[250px] h-[200px] overflow-hidden object-cover"
 								alt="미리보기"
 							/>
@@ -230,7 +235,7 @@
 						</div>
 					</div>
 					<div
-						v-if="extraSrcs.length < 8"
+						v-if="extraImgIds.length < 8"
 						@click="openExtraImageFileExplorer"
 						class="border-dashed border-gray border-2! hover-green hover:bg-teal-50 cursor-pointer rounded-md h-[200px] w-[250px]"
 					>
@@ -248,7 +253,7 @@
 						</div>
 					</div>
 					<input
-						@change="handleExtraImgAdded"
+						@change="uploadImg($event, 'EXTRA')"
 						ref="extraFileInput"
 						type="file"
 						:multiple="false"
@@ -262,10 +267,10 @@
 				<span class="text-gray-500">공개 설정</span>
 				<div class="flex justify-between mt-2">
 					<div
-						@click="boardData.visibility = 'ALL'"
+						@click="boardData.visibility = 'PUBLIC'"
 						class="border-gray border-2! hover-green hover:bg-teal-50 cursor-pointer rounded-4xl h-[200px] w-[350px]"
 						:class="
-							boardData.visibility === 'ALL'
+							boardData.visibility === 'PUBLIC'
 								? 'bg-teal-50 border-green'
 								: ''
 						"
@@ -273,7 +278,8 @@
 						<div class="w-full h-full text-center content-center">
 							<div>
 								<span class="text-gray-400 text-sm"
-									><font-awesome-icon :icon="['fas', 'plus']"
+									><font-awesome-icon
+										:icon="['fas', 'earth']"
 								/></span>
 							</div>
 							<div>
@@ -300,7 +306,8 @@
 						<div class="w-full h-full text-center content-center">
 							<div>
 								<span class="text-gray-400 text-sm"
-									><font-awesome-icon :icon="['fas', 'plus']"
+									><font-awesome-icon
+										:icon="['fas', 'people-group']"
 								/></span>
 							</div>
 							<div>
@@ -327,7 +334,7 @@
 						<div class="w-full h-full text-center content-center">
 							<div>
 								<span class="text-gray-400 text-sm"
-									><font-awesome-icon :icon="['fas', 'plus']"
+									><font-awesome-icon :icon="['fas', 'lock']"
 								/></span>
 							</div>
 							<div>
@@ -348,19 +355,22 @@
 
 		<!-- 임시 저장, 등록 버튼 -->
 		<div class="flex justify-between pl-5 pr-5 mt-10 mb-30">
-			<div>
+			<div @click="router.back()">
 				<span class="cursor-pointer"
 					><font-awesome-icon :icon="['fa', 'arrow-left']" />
 					돌아가기</span
 				>
 			</div>
 			<div class="flex flex-row">
-				<button class="white-btn h-[40px] w-[100px] mr-2">
+				<button
+					@click="draft"
+					class="white-btn h-[40px] w-[100px] mr-2"
+				>
 					<font-awesome-icon :icon="['far', 'floppy-disk']" />
 					임시저장
 				</button>
 				<button
-					@click="save"
+					@click="publish"
 					class="btn bg-teal-500 h-[40px] w-[100px] text-white"
 				>
 					<font-awesome-icon :icon="['far', 'paper-plane']" />
@@ -372,7 +382,7 @@
 </template>
 <script setup lang="ts">
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 import type { BoardRequest } from "./types/request/BoardRequest";
 import CustomSelect from "@/components/CustomSelect.vue";
 import type { SelectItem } from "@/components/common/types/SelectItem";
@@ -381,27 +391,34 @@ import flatPickr from "vue-flatpickr-component";
 import TagEditor from "@/components/tiptab/TagEditor.vue";
 import ContentEditor from "@/components/tiptab/ContentEditor.vue";
 import axios, { AxiosError, type AxiosResponse } from "axios";
-import type { CommonResponse } from "@/components/common/types/response/CommonResponse";
 import type { ErrorResponse } from "@/components/common/types/response/ErrorResponse";
 import router from "@/router";
+import type { DraftResponse } from "./types/response/DraftResponse";
+import { useSpinnerStore } from "@/stores/Spinner";
+
+const { startSpinner, endSpinner } = useSpinnerStore();
 
 const previewSrc = ref<string>(""); // 대표 이미지 미리보기
 const extraSrcs = ref<string[]>([]); // 추가 이미지
 const fileInput = ref<HTMLInputElement | null>(null); // 대표 이미지 input 주소값
 const extraFileInput = ref<HTMLInputElement | null>(null); // 추가 이미지 input 주소값
-const featureImg = ref<File>(); // 대표 이미지
-const extraImgs = ref<File[]>([]); // 추가 이미지
+const extraImgIds = ref<number[]>([]); // 추가 이미지 file id
 const selectedItem = ref<SelectItem>();
+const featureImgId = ref<number | null>(null); // 대표 이미지 파일 id
 // 작성한 게시글 내용
 const boardData = ref<BoardRequest>({
+	boardId: 0,
 	title: "",
-	content: "",
+	contentValue: {
+		content: "",
+		contentHtml: "",
+	},
 	travelStartAt: null,
 	travelEndAt: null,
 	category: "",
 	tags: [],
 	place: "",
-	visibility: "ALL", // 전체 공개 ALL, 팔로워 공개 FOLLOW, 비공개 PRIVATE
+	visibility: "PUBLIC", // 전체 공개 PUBLIC, 팔로워 공개 FOLLOW, 비공개 PRIVATE
 	status: "DRAFT",
 });
 // 여행 카테고리 선택 Item
@@ -425,49 +442,55 @@ const config = ref({
 	locale: Korean,
 });
 
-// 태그 에디터에서 입력한 태그 가져오기
-const updateTags = (tags: string[]) => {
-	boardData.value.tags = tags;
-};
 // 제목 길이 100자 제한
 const limitTitleLength = () => {
 	boardData.value.title = boardData.value.title.substring(0, 99);
 };
-const save = () => {
-	boardData.value.title = boardData.value.title.trim();
-	boardData.value.place = boardData.value.place.trim();
+
+// 임시 저장
+const draft = () => {
+	startSpinner();
+	boardData.value.status = "DRAFT";
+	axios
+		.post("/web/api/board/draft", boardData.value)
+		.then((res: AxiosResponse<number>) => {
+			boardData.value.boardId = res.data;
+		})
+		.catch((error: AxiosError<ErrorResponse>) => {
+			console.log(error);
+			alert(error.response?.data.errorMessage);
+		})
+		.finally(() => {
+			endSpinner();
+		});
+};
+
+// 게시글 등록
+const publish = () => {
+	boardData.value.title = boardData.value.title
+		? boardData.value.title.trim()
+		: "";
+	boardData.value.place = boardData.value.place
+		? boardData.value.place.trim()
+		: "";
 	if (!validCheck()) {
 		return;
 	}
-
-	const formData = new FormData();
-	// 대표 이미지 formData에 넣기
-	if (featureImg.value) {
-		formData.append("featureImg", featureImg.value);
-	}
-	// 추가 이미지 formData에 넣기
-	if (extraImgs.value) {
-		for (const img of extraImgs.value) {
-			formData.append("extraImgs", img);
-		}
-	}
-	// json으로 변환 후 type을 application/json으로 지정하여 formData에 넣기
-	const jsonBlob = new Blob([JSON.stringify(boardData.value)], {
-		type: "application/json",
-	});
-	formData.append("boardData", jsonBlob);
-
+	boardData.value.status = "PUBLISHED";
+	startSpinner();
 	axios
-		.post("/web/api/board/write", formData, {
-			headers: { "Content-Type": "multipart/form-data" },
-		})
-		.then((res: AxiosResponse<CommonResponse>) => {
-			alert(res.data.message);
+		.post("/web/api/board/write", boardData.value)
+		.then((res: AxiosResponse<number>) => {
+			// 게시글 등록일때
+			alert("게시글 등록을 성공하였습니다.");
 			router.push("/");
 		})
 		.catch((error: AxiosError<ErrorResponse>) => {
 			console.log(error);
 			alert(error.response?.data.errorMessage);
+		})
+		.finally(() => {
+			endSpinner();
 		});
 };
 // 게시글 등록 유효성 체크
@@ -492,55 +515,93 @@ const validCheck = () => {
 		alert("카테고리를 입력해주세요.");
 		return false;
 	}
-	const tmpContent = boardData.value.content.replace("<p></p>", "");
-	if (!tmpContent) {
+	const tmpContent = boardData.value.contentValue.contentHtml;
+
+	if (tmpContent === "<p></p>" || tmpContent === "") {
 		alert("내용을 입력해주세요.");
-		return false;
-	}
-	if (!featureImg.value) {
-		alert("대표 이미지를 선택해주세요.");
 		return false;
 	}
 	return true;
 };
-// 추가 이미지 추가
-const handleExtraImgAdded = (event: Event) => {
-	// 최대 8개로 제한
-	if (extraImgs.value && extraImgs.value?.length >= 8) {
-		return;
-	}
-	const target = event.target as HTMLInputElement; // 선택한 파일 가져오기
-	const file = target.files?.[0];
-	if (file) {
-		extraSrcs.value.push(URL.createObjectURL(file));
-		extraImgs.value?.push(file);
+
+// 대표 이미지 삭제
+const deleteFeatureImage = async () => {
+	if (featureImgId.value) {
+		await deleteImage(featureImgId.value);
+		featureImgId.value = null;
+		releaseFeatureImgMemory();
 	}
 };
-const deleteExtraImage = (index: number) => {
-	if (extraImgs.value && extraImgs.value[index]) {
-		extraImgs.value.splice(index, 1); // 저장된 파일 정보 삭제
+// 추가 이미지 삭제
+const deleteExtraImage = async (index: number) => {
+	const fileId = extraImgIds.value[index];
+	if (fileId) {
+		await deleteImage(fileId);
+		if (extraImgIds.value && extraImgIds.value[index]) {
+			extraImgIds.value.splice(index, 1); // 저장된 파일 정보 삭제
+		}
 	}
-	releaseExtraImgMemory(index);
+};
+
+const deleteImage = async (fileId: number) => {
+	startSpinner();
+	await axios
+		.delete(`/web/api/board/file/${fileId}`)
+		.catch(() => {
+			alert("파일 삭제를 실패하였습니다.");
+		})
+		.finally(() => {
+			endSpinner();
+		});
 };
 // 대표 이미지 등록
-const handleFeatureImgAdded = (event: Event) => {
+const uploadImg = (event: Event, type: string) => {
 	const target = event.target as HTMLInputElement; // 선택한 파일 가져오기
 	const file = target.files?.[0];
+	const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
-	// 대표 이미지 미리보기 메모리 해제
-	releaseFeatureImgMemory();
+	if (file && file.size > MAX_FILE_SIZE) {
+		alert("파일 크기는 5MB 이하만 업로드할 수 있습니다.");
+		target.value = "";
+		return;
+	}
 
+	const formData = new FormData();
 	if (file) {
-		previewSrc.value = URL.createObjectURL(file);
-		featureImg.value = file;
+		formData.append("file", file);
 	}
-};
-// 추가 이미지 미리보기 메모리 해제
-const releaseExtraImgMemory = (index: number) => {
-	if (extraSrcs.value[index]) {
-		URL.revokeObjectURL(extraSrcs.value[index]); // url 미리보기 메모리 해제
-		extraSrcs.value.splice(index, 1); // 미리보기 url 초기화
-	}
+	const jsonBlob = new Blob([JSON.stringify(type)], {
+		type: "application/json",
+	});
+	formData.append("type", jsonBlob);
+	// 파일 업로드
+	startSpinner();
+	axios
+		.post("/web/api/board/file/upload", formData, {
+			headers: { "Content-Type": "multipart/form-data" },
+		})
+		.then((res: AxiosResponse<number>) => {
+			if (type === "FEATURE") {
+				// 대표 이미지 미리보기 메모리 해제
+				releaseFeatureImgMemory();
+
+				if (file) {
+					// 미리보기 이미지 생성
+					previewSrc.value = URL.createObjectURL(file);
+					featureImgId.value = res.data;
+				}
+			} else {
+				// 추가 이미지
+				extraImgIds.value.push(res.data);
+			}
+		})
+		.catch((res: AxiosError<ErrorResponse>) => {
+			alert("파일 업로드 실패하였습니다.");
+			target.value = "";
+		})
+		.finally(() => {
+			endSpinner();
+		});
 };
 const openExtraImageFileExplorer = () => {
 	extraFileInput.value?.click();
@@ -550,13 +611,6 @@ const openFeaturedImageFileExplorer = () => {
 	fileInput.value?.click();
 };
 
-// 대표 이미지 삭제
-const deleteFeaturedImage = () => {
-	if (fileInput.value) {
-		fileInput.value.value = ""; // 저장된 파일 정보 삭제
-	}
-	releaseFeatureImgMemory();
-};
 // 대표 이미지 미리보기 메모리 해제
 const releaseFeatureImgMemory = () => {
 	if (previewSrc.value) {
@@ -564,6 +618,54 @@ const releaseFeatureImgMemory = () => {
 		previewSrc.value = ""; // 미리보기 url 초기화
 	}
 };
+// 임시 저장 데이터 삭제
+const deleteDraft = (boardId: number) => {};
+// 임시저장된 게시글 조회
+const getDraft = () => {
+	startSpinner();
+	axios
+		.get("/web/api/board/draft")
+		.then((res: AxiosResponse<DraftResponse>) => {
+			const data = res.data;
+			if (!data) {
+				// 임시저장된 데이터 없음
+				return;
+			}
+			if (
+				confirm(
+					"이전에 임시저장한 게시글이 있습니다. 불러오시겠습니까?",
+				)
+			) {
+				boardData.value.boardId = data.boardId; // 게시글 id
+				boardData.value.category = data.category; // 카테고리
+				boardData.value.contentValue = {
+					content: data.content, // 내용
+					contentHtml: data.contentHtml, // 내용 html
+				};
+				boardData.value.place = data.place; // 여행 장소
+				boardData.value.status = data.status; // 게시글 상태
+				boardData.value.tags = data.tags; // 태그
+				boardData.value.title = data.title; // 제목
+				boardData.value.travelEndAt = data.travelEndAt; // 여행 종료일
+				boardData.value.travelStartAt = data.travelStartAt; // 여행 시작일
+				boardData.value.visibility = data.visibility; // 공개 범위
+				if (data.featureImgId) {
+					featureImgId.value = data.featureImgId; // 대표 이미지
+					previewSrc.value = `/web/api/board/file/${featureImgId.value}`; // 대표 이미지 미리보기 url
+				}
+				extraImgIds.value = data.extraImgIds ?? []; // 추가이미지
+			} else {
+				// 불러오기 안하면 임시저장 삭제
+				deleteDraft(data.boardId);
+			}
+		})
+		.finally(() => {
+			endSpinner();
+		});
+};
+onMounted(() => {
+	getDraft();
+});
 </script>
 <style scoped>
 .board-frame {

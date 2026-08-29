@@ -40,6 +40,10 @@ public class BoardTagEntity {
     @Column(nullable = false, length = 30)
     private String tag; // 태그 값
 
+    public void setTag(String tag) {
+        this.tag = tag;
+    }
+
     // tags 값 리스트를 tag entity 리스트로 반환
     public static List<BoardTagEntity> toEntity(List<String> tags, Long boardId) {
         List<BoardTagEntity> tagEntityList = new ArrayList<>();
@@ -47,5 +51,10 @@ public class BoardTagEntity {
             tagEntityList.add(BoardTagEntity.builder().boardId(boardId).tag(tag).build());
         }
         return tagEntityList;
+    }
+
+    // entity list를 tag 만 뽑아서 list 로 반환
+    public static List<String> toList(List<BoardTagEntity> tagList) {
+        return tagList.stream().map(entity -> entity.getTag()).toList();
     }
 }

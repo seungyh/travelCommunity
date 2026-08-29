@@ -1,10 +1,11 @@
-import type { ContentEditorModelValue } from "../ContentEditorModelValue";
-
-// 게시글 등록/수정 요청 객체
-export interface BoardRequest {
+/**
+ * 임시저장 게시글 조회 정보
+ */
+export interface DraftResponse {
 	boardId: number; // 임시저장 후 boardID
 	title: string; // 제목
-	contentValue: ContentEditorModelValue; // 내용
+	content: string; // 내용
+	contentHtml: string; // 내용 Html
 	travelStartAt: Date | null; // 여행 시작일
 	travelEndAt: Date | null; // 여행 종료일
 	category: string | null; // 여행 카테고리
@@ -12,4 +13,6 @@ export interface BoardRequest {
 	place: string; // 여행 장소
 	visibility: string; // 공개 설정(전체, 팔로우 공개, 비공개)
 	status: string; // 상태(DRAFT: 임시 저장, PUBLIC: 게시)
+	featureImgId: number | null; // 대표 이미지 file id
+	extraImgIds: number[] | null; // 추가 이미지 file id
 }

@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.travel.community.pages.board.repository.BoardMapper">
+	<select id="searchBoard" resultType="com.travel.community.pages.board.dto.BoardInfo">
+
+		SELECT 
+			ROW_NUMBER() OVER (ORDER BY board.created_at DESC) AS rowNum, 
+			board.id AS boardId,
+			users.user_id AS userId,
+			users.nickname AS nickName,
+			EXISTS (
+				SELECT 1
+				FROM follow follow
+				WHERE
+					follow.follower_id = #{userId}
+					AND board.user_id = follow.following_id
+			) AS isFollow,
+			EXISTS (
+				SELECT 1
+				FROM board_like boardLike
+				WHERE 
+					boardLike.user_id = #{userId}
+					AND board.id = boardLike.board_id
+			) AS isLike,
+			board.title AS title,
+			board.content AS content,
+			board.like_count AS likeCount,
+			board.shared_count AS sharedCount,
+			board.comment_count AS commentCount,
+			board.created_at AS createdAt,
+			boardFiles.file_name AS boardFileName,
+			profiles.file_name AS profileName
+		FROM 
+			board board 
+		JOIN 
+			users users
+		ON 
+			users.user_id = board.user_id
+		LEFT JOIN
+			profile_files profiles
+		ON
+			profiles.user_id = users.user_id
+		LEFT JOIN
+			board_files boardFiles
+		ON
+			board.id = boardFiles.board_id
+		AND 
+			boardFiles.type = 'FEATURE'
+		WHERE 
+			status = 'PUBLISHED'
+		<if test="searchFilter.filter != null and searchFilter.filter.place != null">
+			AND place LIKE CONCAT('%', #{searchFilter.filter.place}, '%')
+		</if>
+		<if test="searchFilter.filter != null and searchFilter.filter.titleOrContent != null"> 
+			AND (title LIKE CONCAT('%', #{searchFilter.filter.titleOrContent}, '%') OR content LIKE CONCAT('%', #{searchFilter.filter.titleOrContent}, '%'))
+		</if>
+		<if test="searchFilter.filter != null and searchFilter.filter.category != null">
+			AND category = #{searchFilter.filter.category}
+		</if>
+		<if test="searchFilter.filter != null and searchFilter.filter.tag.size() > 0">
+			AND board.id IN (SELECT board_id 
+					FROM board_tags
+					WHERE
+						<foreach collection="searchFilter.filter.tag"
+							item="tag"
+							open="("
+							separator=" OR "
+							close=")">
+							tag LIKE CONCAT('%', #{tag}, '%')
+						</foreach>
+			)
+		</if>
+			AND 
+			(
+				board.visibility = 'PUBLIC'
+				OR board.visibility = 'FOLLOW'
+					AND board.user_id IN (
+						SELECT follow.following_id
+						FROM follow follow
+						WHERE follow.follower_id = #{userId}
+					)
+			)
+		<choose>
+			<when test="searchFilter.sortField == 'created_at'">
+				<if test="searchFilter.filter.boardIdCursor != 0">
+					AND board.id
+            		&lt; #{searchFilter.filter.boardIdCursor}
+				</if>
+				ORDER BY board.created_at DESC, board.id DESC
+			</when>
+			<when test="searchFilter.sortField == 'like_count'">
+				<if test="searchFilter.filter.boardIdCursor != 0">
+					AND (board.like_count, board.id)
+            		&lt; (#{searchFilter.filter.likeCursor}, #{searchFilter.filter.boardIdCursor})
+				</if>
+            	
+				ORDER BY board.created_at DESC, board.id DESC
+			</when>
+		</choose>
+		LIMIT ${searchFilter.size}
+	
+	</select>
+
+	<select id="searchBoardTotal" resultType="int">
+
+		SELECT 
+			COUNT(*)
+		FROM 
+			board board 
+		JOIN 
+			users users
+		ON 
+			users.user_id = board.user_id
+		LEFT JOIN
+			profile_files profiles
+		ON
+			profiles.user_id = users.user_id
+		LEFT JOIN
+			board_files boardFiles
+		ON
+			board.id = boardFiles.board_id
+		AND 
+			boardFiles.type = 'FEATURE'
+		WHERE 
+			status = 'PUBLISHED'
+		<if test="searchFilter.filter != null and searchFilter.filter.place != null">
+			AND place LIKE CONCAT('%', #{searchFilter.filter.place}, '%')
+		</if>
+		<if test="searchFilter.filter != null and searchFilter.filter.titleOrContent != null"> 
+			AND (title LIKE CONCAT('%', #{searchFilter.filter.titleOrContent}, '%') OR content LIKE CONCAT('%', #{searchFilter.filter.titleOrContent}, '%'))
+		</if>
+		<if test="searchFilter.filter != null and searchFilter.filter.category != null">
+			AND category = #{searchFilter.filter.category}
+		</if>
+		<if test="searchFilter.filter != null and searchFilter.filter.tag.size() > 0">
+			AND board.id IN (SELECT board_id 
+					FROM board_tags
+					WHERE
+						<foreach collection="searchFilter.filter.tag"
+							item="tag"
+							open="("
+							separator=" OR "
+							close=")">
+							tag LIKE CONCAT('%', #{tag}, '%')
+						</foreach>
+			)
+		</if>
+			AND 
+			(
+				board.visibility = 'PUBLIC'
+				OR board.visibility = 'FOLLOW'
+					AND board.user_id IN (
+						SELECT follow.following_id
+						FROM follow follow
+						WHERE follow.follower_id = #{userId}
+					)
+			)
+	
+	</select>
+
+	<select id="selectImgAccessInfo" resultType="com.travel.community.pages.board.dto.BoardFileAccessInfo">
+		SELECT 
+			board.status AS status, 
+			board.visibility AS visibility, 
+			board.user_id AS userId,
+			boardFiles.path AS path
+		FROM 
+			board_files boardFiles
+		JOIN 
+			board board
+		ON 
+			boardFiles.board_id = board.id
+		WHERE 
+			boardFiles.id = #{fileId}
+	</select>
+	<select id="selectDraftByUserId" resultType="com.travel.community.pages.board.dto.response.BoardDraftResponse">
+		SELECT 
+			board.id AS boardId,
+			board.title AS title,
+			board.content AS content,
+			board.content_html AS contentHtml,
+			board.travel_start_at AS travelStartAt,
+			board.travel_end_at AS travelEndAt,
+			board.status AS status,
+			board.visibility AS visibility,
+			board.category AS category,
+			boardFiles.id AS featureImgId
+		FROM 
+			board board
+		LEFT JOIN 
+			board_files boardFiles
+		ON 
+			board.id = boardFiles.board_id AND boardFiles.type = 'FEATURE'
+		WHERE 
+			board.user_id = #{userId} AND board.status = 'DRAFT'
+	</select>
+</mapper>

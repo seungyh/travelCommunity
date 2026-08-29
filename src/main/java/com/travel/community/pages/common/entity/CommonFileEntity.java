@@ -28,6 +28,9 @@ public abstract class CommonFileEntity {
     @Column(name = "origin_name")
     protected String originalName; // 원본 파일명
 
+    @Column(name = "file_name")
+    protected String fileName; // 저장 파일명
+
     @Column(nullable = false)
     protected String path; // 저장 경로
 }

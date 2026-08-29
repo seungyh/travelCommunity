@@ -1,27 +1,6 @@
 <template>
 	<div class="h-full">
 		<div className="toolbar">
-			<!-- <button
-				@click="editor?.chain().focus().toggleBold().run()"
-				class="bold"
-				:class="editor?.isActive('bold') ? 'is-active' : ''"
-			>
-				B
-			</button>
-			<button
-				@click="editor?.chain().focus().toggleItalic().run()"
-				class="italic"
-				:class="editor?.isActive('italic') ? 'is-active' : ''"
-			>
-				I
-			</button>
-			<button
-				@click="editor?.chain().focus().toggleStrike().run()"
-				class="line-through"
-				:class="editor?.isActive('strike') ? 'is-active' : ''"
-			>
-				S
-			</button> -->
 			<button
 				@click="editor?.chain().focus().toggleBold().run()"
 				class="toolbar-btn"
@@ -207,7 +186,7 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, onMounted, ref } from "vue";
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/vue-3";
 import TextAlign from "@tiptap/extension-text-align";
@@ -216,8 +195,18 @@ import { Color, FontSize, TextStyle } from "@tiptap/extension-text-style";
 import FileHandler from "@tiptap/extension-file-handler";
 import Image from "@tiptap/extension-image";
 import { Dropcursor } from "@tiptap/extensions";
+import type { ContentEditorModelValue } from "@/pages/board/write/types/ContentEditorModelValue";
+import axios, { AxiosError, type AxiosResponse } from "axios";
+import type { ErrorResponse } from "../common/types/response/ErrorResponse";
+import { useSpinnerStore } from "@/stores/Spinner";
 
-const emit = defineEmits<{ (e: "update:modelValue", content: string): void }>();
+const props = defineProps(["modelValue"]);
+const emit = defineEmits<{
+	(e: "update:modelValue", content: ContentEditorModelValue): void;
+	(e: "draft"): void;
+}>();
+const { startSpinner, endSpinner } = useSpinnerStore();
+
 const currentFontSize = ref<number>(10);
 const isFontSizeMenuOpen = ref(false);
 const fileInput = ref<HTMLInputElement | null>();
@@ -233,7 +222,6 @@ const editor = useEditor({
 		TextStyle,
 		Color.configure({ types: [TextStyle.name, ListItem.name] }),
 		Image.configure({
-			allowBase64: true, // 이미지를 base64 문자열로 파싱할 수 있도록 허용
 			// 내장 리사이즈 기능 활성화 (상, 하, 좌, 우, 대각선 핸들 자동 생성)
 			resize: {
 				enabled: true,
@@ -248,31 +236,31 @@ const editor = useEditor({
 				"image/gif",
 				"image/webp",
 			],
-			onDrop: (currentEditor, files, pos) => {
-				files.forEach((file) => {
-					const fileReader = new FileReader();
-
-					fileReader.readAsDataURL(file);
-					fileReader.onload = () => {
+			onDrop: async (currentEditor, files, pos) => {
+				startSpinner();
+				for (const file of files) {
+					const src = await uploadImg(file);
+					if (src) {
 						currentEditor
 							.chain()
 							.insertContentAt(pos, {
 								type: "image",
 								attrs: {
-									src: fileReader.result,
+									src: src,
 								},
 							})
 							.focus()
 							.run();
-					};
-				});
+						emit("draft");
+					}
+				}
+				endSpinner();
 			},
-			onPaste: (currentEditor, files) => {
-				files.forEach((file) => {
-					const fileReader = new FileReader();
-
-					fileReader.readAsDataURL(file);
-					fileReader.onload = () => {
+			onPaste: async (currentEditor, files) => {
+				startSpinner();
+				for (const file of files) {
+					const src = await uploadImg(file);
+					if (src) {
 						currentEditor
 							.chain()
 							.insertContentAt(
@@ -280,19 +268,70 @@ const editor = useEditor({
 								{
 									type: "image",
 									attrs: {
-										src: fileReader.result,
+										src: src,
 									},
 								},
 							)
 							.focus()
 							.run();
-					};
-				});
+						emit("draft");
+					}
+				}
+				endSpinner();
 			},
 		}),
 	],
 	onUpdate({ editor }) {
-		emit("update:modelValue", editor.getHTML());
+		const modelValue = {
+			contentHtml: editor.getHTML(),
+			content: editor.getText(),
+		};
+		emit("update:modelValue", modelValue);
+	},
+	async onDelete(props) {
+		if (props.type !== "node") return;
+		if (props.node.type.name !== "image") return;
+
+		const src = props.node.attrs.src as string;
+
+		let exists = false;
+
+		props.editor.state.doc.descendants((node) => {
+			if (node.type.name === "image" && node.attrs.src === src) {
+				exists = true;
+			}
+		});
+
+		// 리사이즈 등으로 기존 노드가 교체된 경우
+		if (exists) {
+			return;
+		}
+
+		// 삭제한 이미지 크기
+		const width = props.node.attrs.width;
+		const height = props.node.attrs.height;
+
+		// 서버에서 이미지 삭제
+		const res = await deleteImage(src);
+
+		// 서버에서 이미지 삭제 실패, 에디터에 이미지 재생성
+		if (!res) {
+			const deletedPos = props.from;
+			// 서버에서 삭제 안됐으면 다시 넣기
+			editor.value
+				?.chain()
+				.focus()
+				.insertContentAt(deletedPos, {
+					type: "image",
+					attrs: {
+						src: props.node.attrs.src,
+						height,
+						width,
+					},
+				})
+				.run();
+		}
+		emit("draft");
 	},
 	editorProps: {
 		attributes: {
@@ -315,23 +354,65 @@ const openFileExplorer = () => {
 	fileInput.value?.click();
 };
 // 이미지 선택해서 추가
-const onFileChange = (event: Event) => {
+const onFileChange = async (event: Event) => {
 	const input = event.target as HTMLInputElement;
 	const file = input.files?.[0];
 
 	if (!file || !editor.value) return;
+	const src = await uploadImg(file);
 
-	const reader = new FileReader();
-
-	reader.onload = () => {
-		const src = reader.result as string;
-
+	if (src) {
 		editor.value?.chain().focus().setImage({ src }).run();
-		input.value = "";
-	};
-
-	reader.readAsDataURL(file);
+	}
 };
+
+const uploadImg = async (file: File) => {
+	const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
+	if (file && file.size > MAX_FILE_SIZE) {
+		alert("파일 크기는 5MB 이하만 업로드할 수 있습니다.");
+		return;
+	}
+
+	const formData = new FormData();
+	if (file) {
+		formData.append("file", file);
+	}
+	const jsonBlob = new Blob([JSON.stringify("CONTENT")], {
+		type: "application/json",
+	});
+	formData.append("type", jsonBlob);
+	// 파일 업로드
+	return axios
+		.post("/web/api/board/file/upload", formData, {
+			headers: { "Content-Type": "multipart/form-data" },
+		})
+		.then((res: AxiosResponse<number>) => {
+			return `/web/api/board/file/${res.data}`;
+		})
+		.catch((res: AxiosError<ErrorResponse>) => {
+			alert("파일 업로드 실패하였습니다.");
+			return null;
+		});
+};
+
+// 파일 삭제 서버에서 삭제 실패하면 false 반환
+const deleteImage = async (url: string) => {
+	startSpinner();
+	return await axios
+		.delete(url)
+		.then((res: AxiosResponse<number>) => {
+			return true;
+		})
+		.catch((res: AxiosError<ErrorResponse>) => {
+			alert("파일 삭제 실패하였습니다.");
+			return false;
+		})
+		.finally(() => {
+			endSpinner();
+		});
+};
+
 const setColor = (event: Event) => {
 	const target = event.target as HTMLInputElement;
 	editor?.value?.chain().focus().setColor(target.value);
@@ -339,6 +420,18 @@ const setColor = (event: Event) => {
 const handleBodyClick = () => {
 	isFontSizeMenuOpen.value = false;
 };
+
+watch(
+	() => props.modelValue,
+	(value) => {
+		editor?.value
+			?.chain()
+			.focus()
+			.setContent(props.modelValue.contentHtml)
+			.run();
+	},
+	{ immediate: true },
+);
 onMounted(async () => {
 	await nextTick();
 	window.addEventListener("click", handleBodyClick);

@@ -7,7 +7,7 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum BoardVisibilityType {
 
-    ALL("전체 공개"),
+    PUBLIC("전체 공개"),
     FOLLOW("팔로우 공개"),
     PRIVATE("비공개"),
     ;

@@ -14,5 +14,4 @@ public interface CommonErrorCode {
 
     String getErrorMessage(); // 사용자에게 보일 메시지
 
-    String getLogMessage(); // 로그 메시지
 }
