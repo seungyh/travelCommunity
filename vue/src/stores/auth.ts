@@ -6,6 +6,9 @@ import { defineStore } from "pinia";
 import { ref } from "vue";
 import router from "@/router";
 
+/**
+ * 로그인 인증 정보 전역 관리
+ */
 export const useAuthStore = defineStore("auth", () => {
 	const isLogin = ref(false); // 로그인 여부
 	const email = ref(""); // 로그인한 사용자 이메일
