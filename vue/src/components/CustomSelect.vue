@@ -36,24 +36,26 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import type { SelectItem } from "./common/types/SelectItem";
 
-const props = defineProps(["placeholder", "item", "items"]);
+const props = defineProps(["modelValue", "placeholder", "item", "items"]);
 const emit = defineEmits<{
 	(e: "update:modelValue", value: string): void; // 커스텀 select box v-model로 연결하기 위해 값 emit
 }>();
 
 const isMenuOpen = ref(false);
-const selectedItem = ref<SelectItem>({
-	label: "",
-	value: "",
-});
 
-const select = (index: number | string) => {
-	selectedItem.value = props.items[index]; // 결과 저장
-	isMenuOpen.value = false; // 메뉴창 닫음
-	emit("update:modelValue", selectedItem.value.value);
+const selectedItem = computed(() => {
+	return props.items.find(
+		(item: SelectItem) => item.value === props.modelValue,
+	);
+});
+const select = (index: number) => {
+	const item = props.items[index];
+
+	isMenuOpen.value = false;
+	emit("update:modelValue", item.value);
 };
 // 바탕 클릭 시 드롭다운 닫음
 const handleBodyClick = () => {
@@ -61,8 +63,6 @@ const handleBodyClick = () => {
 };
 
 onMounted(() => {
-	// 부모에서 default value 저장
-	selectedItem.value = props.item;
 	window.addEventListener("click", handleBodyClick);
 });
 </script>

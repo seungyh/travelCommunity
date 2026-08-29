@@ -8,14 +8,14 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, onMounted } from "vue";
+import { nextTick, onBeforeUnmount, onMounted, watch } from "vue";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/vue-3";
 
 import { TagNode } from "./node/TagNode";
 
-const props = defineProps<{ tags: [] }>(); // 기존에 입력한 태그
-const emit = defineEmits<{ (e: "updateTags", item: string[]): void }>();
+const props = defineProps(["modelValue"]); // 기존에 입력한 태그
+const emit = defineEmits<{ (e: "modelValue", item: string[]): void }>();
 
 const editor = useEditor({
 	content: "<p></p>",
@@ -24,7 +24,7 @@ const editor = useEditor({
 
 	// 에디터 변경 시 부모 컴포넌트로 태그 전송
 	onUpdate({ editor }) {
-		emit("updateTags", getTags());
+		emit("modelValue", getTags());
 	},
 	editorProps: {
 		attributes: {
@@ -120,24 +120,29 @@ const getTags = () => {
 };
 
 // 기존에 입력한 태그 값 태그 chip으로 생성
-const makeHashTagChips = async () => {
-	await nextTick();
-	if (!editor.value) {
-		return;
-	}
-	for (const tag of props.tags) {
-		editor.value
-			.chain()
-			.focus()
-			.insertContent({
-				type: "tag",
-				attrs: {
-					value: tag,
-				},
-			})
-			.run();
-	}
-};
+const makeHashTagChips = async () => {};
+watch(
+	() => props.modelValue,
+	async (value) => {
+		await nextTick();
+		if (!editor.value) {
+			return;
+		}
+		for (const tag of props.modelValue) {
+			editor.value
+				.chain()
+				.focus()
+				.insertContent({
+					type: "tag",
+					attrs: {
+						value: tag,
+					},
+				})
+				.run();
+		}
+	},
+	{ immediate: true },
+);
 onMounted(() => {
 	makeHashTagChips();
 });
