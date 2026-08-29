@@ -13,15 +13,15 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class CustomOAuth2User implements OAuth2User {
 
-    private Long userId; // db에 저장된 users 테이블 id
+    private String userId; // userId
     private String provider; // 로그인한 플랫폼
 
     private final Map<String, Object> attributes;
     private final Collection<? extends GrantedAuthority> authorities;
 
-    public CustomOAuth2User(Long id, String provider,
+    public CustomOAuth2User(String userId, String provider,
             Map<String, Object> attributes, Collection<? extends GrantedAuthority> authorities) {
-        this.userId = id;
+        this.userId = userId;
         this.provider = provider;
         this.attributes = attributes;
         this.authorities = authorities;

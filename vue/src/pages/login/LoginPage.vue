@@ -155,7 +155,6 @@ const isLoginMode = ref(true);
 const isHidePwd = ref(true);
 
 const openKakaoLogin = () => {
-	// location.href = "http://localhost:8080/oauth2/authorization/kakao";
 	location.href = `${import.meta.env.VITE_API_URL}/oauth2/authorization/kakao`;
 };
 

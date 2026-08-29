@@ -114,7 +114,7 @@
 </template>
 <script setup lang="ts">
 import type { ErrorResponse } from "@/components/common/types/response/ErrorResponse";
-import { emailCheck } from "@/utills/ValidCheck";
+import { emailCheck } from "@/utils/ValidCheck";
 import axios, { AxiosError, type AxiosResponse } from "axios";
 import { ref } from "vue";
 

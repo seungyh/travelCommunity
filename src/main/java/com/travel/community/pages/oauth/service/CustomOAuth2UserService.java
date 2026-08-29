@@ -46,27 +46,27 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         String provider = userRequest.getClientRegistration().getClientName();
         String providerId = String.valueOf(oauth2User.getAttributes().get("id"));
         String profileImage = (String) properties.get("profile_image");
-        OAuthEntity authEntity = oAuthRepository.findByProviderIdAndProvider(providerId, provider);
+        OAuthEntity oauthEntity = oAuthRepository.findByProviderIdAndProvider(providerId, provider);
         String nickName = nickNameCreator.getNickName();
         UserEntity userEntity = null;
         // 첫 로그인이면 DB 저장
-        if (authEntity == null) {
+        if (oauthEntity == null) {
             // users 테이블에 저장 후 userId를 id로 설정
             userEntity = UserEntity.builder().nickName(nickName).role(Roles.USER).build();
             accountRepository.save(userEntity);
-            userEntity.setUserId(userEntity.getId());
+            userEntity.setUserId(userEntity.getId().toString());
+            accountRepository.flush(); // 영속 상태 db에 반영시키기
             // oauth 정보 저장
-            oAuthRepository.save(OAuthEntity.builder().providerId(providerId).provider(provider)
+            oauthEntity = oAuthRepository.save(OAuthEntity.builder().providerId(providerId).provider(provider)
                     .userId(userEntity.getUserId()).build());
             // 프로필 이미지 저장
-            profileRepository.save(ProfileEntity.create(null, profileImage, userEntity.getId()));
+            profileRepository.save(ProfileEntity.create(null, profileImage, userEntity.getUserId()));
         } else {
-            OAuthEntity oAuthEntity = oAuthRepository.findByProviderIdAndProvider(providerId, provider);
-            ProfileEntity profileEntity = profileRepository.findByUserId(oAuthEntity.getUserId());
+            ProfileEntity profileEntity = profileRepository.findByUserId(oauthEntity.getUserId());
             profileEntity.setPath(profileImage);
         }
 
-        return new CustomOAuth2User(authEntity.getId(), provider, properties,
+        return new CustomOAuth2User(oauthEntity.getUserId(), provider, properties,
                 List.of(new SimpleGrantedAuthority("ROLE_USER")));
     }
 }
