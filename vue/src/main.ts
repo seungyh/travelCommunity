@@ -11,10 +11,21 @@ import axios, { AxiosError } from "axios";
 import { createPinia } from "pinia";
 import { useAuthStore } from "./stores/Auth.ts";
 import type { ErrorResponse } from "./components/common/types/response/ErrorResponse.ts";
+import { VueSpinnersPlugin } from "vue3-spinners";
+import Toast from "vue-toastification";
+import "vue-toastification/dist/index.css";
 
 const app = createApp(App);
 // 전역 컴포넌트 등록
 app.component("font-awesome-icon", FontAwesomeIcon);
+app.use(VueSpinnersPlugin);
+
+const options = {
+	// toast 필요한 설정 옵션 (예: 지속 시간)
+	timeout: 3000,
+};
+
+app.use(Toast, options);
 
 app.use(router).use(createPinia()).mount("#app");
 
