@@ -14,6 +14,7 @@
   margin: 0 auto;
   justify-self: center;
   border: solid 1px #E5E7EB;
+  position: relative;
 }
 a,
 .green {
@@ -41,7 +42,7 @@ a,
 	outline: none;
 }
 .border-gray {
-  border: 1px solid #e5e7eb;
+  border: 1px solid #d1d5db;
 }
 .hover-green:hover {
   border-color: #10b981; /* 초록색 */

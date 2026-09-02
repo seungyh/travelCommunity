@@ -8,6 +8,7 @@ import org.apache.ibatis.annotations.Param;
 import com.travel.community.pages.board.dto.BoardFileAccessInfo;
 import com.travel.community.pages.board.dto.BoardInfo;
 import com.travel.community.pages.board.dto.BoardSearchFilter;
+import com.travel.community.pages.board.dto.response.BoardDetailResponse;
 import com.travel.community.pages.board.dto.response.BoardDraftResponse;
 import com.travel.community.pages.common.dto.request.SearchRequest;
 
@@ -50,4 +51,13 @@ public interface BoardMapper {
 	 * @return
 	 */
 	BoardDraftResponse selectDraftByUserId(String userId);
+
+	/**
+	 * 게시글 상세 정보 조회
+	 * 
+	 * @param userId
+	 * @param boardId
+	 * @return
+	 */
+	BoardDetailResponse getBoardDetail(String userId, Long boardId);
 }

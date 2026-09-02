@@ -1,7 +1,7 @@
 <template>
 	<div class="frame">
 		<HeaderLayout />
-		<div style="background-color: #fafafb">
+		<div style="background-color: #fafafb; margin-top: 70px">
 			<router-view style="background-color: #fcfcfd" />
 		</div>
 	</div>

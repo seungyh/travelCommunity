@@ -15,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.travel.community.pages.board.dto.BoardSearchFilter;
 import com.travel.community.pages.board.dto.request.BoardWriteRequest;
+import com.travel.community.pages.board.dto.response.BoardDetailResponse;
 import com.travel.community.pages.board.dto.response.BoardDraftResponse;
 import com.travel.community.pages.board.dto.response.BoardLikeResponse;
 import com.travel.community.pages.board.dto.response.BoardSearchResponse;
@@ -150,5 +151,17 @@ public class BoardController {
     @PatchMapping("/like/{boardId}")
     public ResponseEntity<BoardLikeResponse> updateBoardLike(HttpServletRequest request, @PathVariable Long boardId) {
         return ResponseEntity.ok(boardService.updateBoardLike(request, boardId));
+    }
+
+    /**
+     * 게시글 상세보기 조회
+     * 
+     * @param request
+     * @param boardId
+     * @return
+     */
+    @GetMapping("/{boardId}")
+    public ResponseEntity<BoardDetailResponse> getBoardDetail(HttpServletRequest request, @PathVariable Long boardId) {
+        return ResponseEntity.ok(boardService.getBoardDetail(request, boardId));
     }
 }

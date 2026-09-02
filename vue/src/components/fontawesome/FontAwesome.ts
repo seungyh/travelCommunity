@@ -10,8 +10,13 @@ import {
 	faFloppyDisk,
 	faPaperPlane,
 	faTrashCan,
+	faHeart as faHeartRegular,
+	faComment,
+	faEye as faEyeRegular,
 } from "@fortawesome/free-regular-svg-icons";
 import {
+	faPeopleGroup,
+	faEarth,
 	faXmark,
 	faChevronDown,
 	faMagnifyingGlass,
@@ -24,9 +29,16 @@ import {
 	faRightFromBracket,
 	faPlus,
 	faArrowLeft,
+	faHeart as faHeartSolid,
 } from "@fortawesome/free-solid-svg-icons";
 
 library.add(
+	faEyeRegular,
+	faPeopleGroup,
+	faEarth,
+	faComment,
+	faHeartSolid,
+	faHeartRegular,
 	faArrowLeft,
 	faPlus,
 	faTrashCan,

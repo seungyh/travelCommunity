@@ -51,7 +51,7 @@ const selectedItem = computed(() => {
 		(item: SelectItem) => item.value === props.modelValue,
 	);
 });
-const select = (index: number) => {
+const select = (index: string | number) => {
 	const item = props.items[index];
 
 	isMenuOpen.value = false;

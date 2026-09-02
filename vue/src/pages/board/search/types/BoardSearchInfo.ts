@@ -1,4 +1,4 @@
-export interface BoardInfo {
+export interface BoardSearchInfo {
 	boardId: number; // 게시글 id
 	userId: string; // 작성자 id
 	nickName: string; // 작성자 nickName

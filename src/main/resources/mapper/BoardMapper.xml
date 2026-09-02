@@ -84,19 +84,47 @@
 			)
 		<choose>
 			<when test="searchFilter.sortField == 'created_at'">
-				<if test="searchFilter.filter.boardIdCursor != 0">
-					AND board.id
-            		&lt; #{searchFilter.filter.boardIdCursor}
+				AND board.created_at 
+				<if test="searchFilter.filter.isNext">
+					&lt; COALESCE(#{searchFilter.filter.dateCursor}, NOW())
 				</if>
-				ORDER BY board.created_at DESC, board.id DESC
+				<if test="not searchFilter.filter.isNext">
+					&gt; COALESCE(#{searchFilter.filter.dateCursor}, TO_TIMESTAMP('1970-01-01', 'YYYY-MM-DD'))
+				</if>
+				
+				<choose>
+					<when test="searchFilter.filter.isNext">
+						ORDER BY board.created_at DESC, board.id DESC
+					</when>
+					<otherwise>
+						ORDER BY board.created_at ASC, board.id ASC
+					</otherwise>
+				</choose>
 			</when>
+
 			<when test="searchFilter.sortField == 'like_count'">
-				<if test="searchFilter.filter.boardIdCursor != 0">
-					AND (board.like_count, board.id)
-            		&lt; (#{searchFilter.filter.likeCursor}, #{searchFilter.filter.boardIdCursor})
+				AND (board.like_count, board.created_at) 
+				<if test="searchFilter.filter.isNext">
+					&lt; (
+						COALESCE(#{searchFilter.filter.likeCursor}, 999999999), 
+						COALESCE(#{searchFilter.filter.dateCursor}, NOW())
+					)
 				</if>
-            	
-				ORDER BY board.created_at DESC, board.id DESC
+				<if test="not searchFilter.filter.isNext">
+					&gt; (
+						COALESCE(#{searchFilter.filter.likeCursor}, 0), 
+						COALESCE(#{searchFilter.filter.dateCursor}, TO_TIMESTAMP('1970-01-01', 'YYYY-MM-DD'))
+					)
+				</if>
+				
+				<choose>
+					<when test="searchFilter.filter.isNext">
+						ORDER BY board.like_count DESC, board.created_at DESC, board.id DESC
+					</when>
+					<otherwise>
+						ORDER BY board.like_count ASC, board.created_at ASC, board.id ASC
+					</otherwise>
+				</choose>
 			</when>
 		</choose>
 		LIMIT ${searchFilter.size}
@@ -195,5 +223,53 @@
 			board.id = boardFiles.board_id AND boardFiles.type = 'FEATURE'
 		WHERE 
 			board.user_id = #{userId} AND board.status = 'DRAFT'
+	</select>
+
+	<select id="getBoardDetail" resultType="com.travel.community.pages.board.dto.response.BoardDetailResponse">
+		SELECT 
+			board.id AS boardId,
+			board.title AS title,
+			board.content_html AS contentHtml,
+			board.travel_start_at AS travelStartAt,
+			board.travel_end_at AS travelEndAt,
+			board.like_count AS likeCount,
+			board.shared_count AS sharedCount,
+			board.comment_count AS commentCount,
+			board.view_count AS viewCount,
+			board.created_at AS createdAt,
+			board.category AS category,
+			board.user_id AS userId,
+			boardFiles.id AS boardFeatureId,
+			users.nickname AS nickName,
+			EXISTS (
+						SELECT 1
+						FROM follow follow
+						WHERE
+							follow.follower_id = #{userId}
+							AND board.user_id = follow.following_id
+					) AS follow,
+			EXISTS (
+				SELECT 1
+				FROM board_like boardLike
+				WHERE 
+					boardLike.user_id = #{userId}
+					AND board.id = boardLike.board_id
+			) AS like,
+			(SELECT COUNT(*)
+			FROM board subBoard
+			WHERE 
+				board.user_id = subBoard.user_id AND subBoard.status = 'PUBLISHED') AS boardCount
+		FROM 
+			board board
+		LEFT JOIN 
+			board_files boardFiles
+		ON 
+			board.id = boardFiles.board_id AND boardFiles.type = 'FEATURE'
+		JOIN
+			users users
+		ON
+			board.user_id = users.user_id
+		WHERE 
+			board.id = #{boardId}
 	</select>
 </mapper>

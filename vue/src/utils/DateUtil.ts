@@ -1,7 +1,10 @@
 /**
  * 오늘로부터 ~일전 ~년전 문자열 반환
  *  */
-export const getDiffDateFromToday = (createdAt: Date) => {
+export const getDiffDateFromToday = (createdAt: Date | null | undefined) => {
+	if (!createdAt) {
+		return "등록일 미존재";
+	}
 	const today = new Date();
 	const createdDate = new Date(createdAt);
 

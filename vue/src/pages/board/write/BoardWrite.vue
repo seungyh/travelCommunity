@@ -27,7 +27,7 @@
 			<div>
 				<input
 					v-model="boardData.title"
-					@keydown="limitTitleLength()"
+					@input="limitTitleLength()"
 					type="text"
 					placeholder="여행의 제목을 입력하세요..."
 					class="h-[40px] text-2xl w-full font-[700] board-title custom-input"
@@ -188,6 +188,7 @@
 				>
 					<ContentEditor
 						v-model="boardData.contentValue"
+						:editable="true"
 						@draft="draft"
 					/>
 				</div>
@@ -397,7 +398,7 @@ import type { DraftResponse } from "./types/response/DraftResponse";
 import { useSpinnerStore } from "@/stores/Spinner";
 
 const { startSpinner, endSpinner } = useSpinnerStore();
-
+const MAX_TITLE_LENGTH = 100; // 제목 글자 수 제한
 const previewSrc = ref<string>(""); // 대표 이미지 미리보기
 const extraSrcs = ref<string[]>([]); // 추가 이미지
 const fileInput = ref<HTMLInputElement | null>(null); // 대표 이미지 input 주소값
@@ -444,7 +445,10 @@ const config = ref({
 
 // 제목 길이 100자 제한
 const limitTitleLength = () => {
-	boardData.value.title = boardData.value.title.substring(0, 99);
+	boardData.value.title = boardData.value.title.substring(
+		0,
+		MAX_TITLE_LENGTH,
+	);
 };
 
 // 임시 저장

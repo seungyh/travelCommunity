@@ -18,6 +18,7 @@ import com.travel.community.pages.board.dto.BoardFileAccessInfo;
 import com.travel.community.pages.board.dto.BoardInfo;
 import com.travel.community.pages.board.dto.BoardSearchFilter;
 import com.travel.community.pages.board.dto.request.BoardWriteRequest;
+import com.travel.community.pages.board.dto.response.BoardDetailResponse;
 import com.travel.community.pages.board.dto.response.BoardDraftResponse;
 import com.travel.community.pages.board.dto.response.BoardLikeResponse;
 import com.travel.community.pages.board.dto.response.BoardSearchResponse;
@@ -86,22 +87,32 @@ public class BoardService {
 	public void updateBoard(HttpServletRequest request, BoardWriteRequest boardInfo,
 			BoardEntity boardEntity) {
 
-		// 기존에 이미 등록된 게시글이면 게시글 수정
-		if (BoardStatus.PUBLISHED.equals(boardEntity.getStatus())) {
-			// 게시글 수정
-			boardEntity.changeValue(boardInfo.getTitle(), boardInfo.getContentValue().getContent(),
-					boardInfo.getContentValue().getContentHtml(), boardInfo.getPlace(), boardInfo.getTravelStartAt(),
-					boardInfo.getTravelEndAt(), boardInfo.getStatus(), boardInfo.getVisibility(),
-					boardInfo.getCategory(),
-					boardEntity.getCreatedAt(), LocalDateTime.now());
-		} else {
-			// 임시저장 수정
-			boardEntity.changeValue(boardInfo.getTitle(), boardInfo.getContentValue().getContent(),
-					boardInfo.getContentValue().getContentHtml(), boardInfo.getPlace(), boardInfo.getTravelStartAt(),
-					boardInfo.getTravelEndAt(), boardInfo.getStatus(), boardInfo.getVisibility(),
-					boardInfo.getCategory(),
-					LocalDateTime.now(), null);
-		}
+		// 게시글 수정
+		boardEntity.changeValue(boardInfo.getTitle(), boardInfo.getContentValue().getContent(),
+				boardInfo.getContentValue().getContentHtml(), boardInfo.getPlace(), boardInfo.getTravelStartAt(),
+				boardInfo.getTravelEndAt(), boardInfo.getStatus(), boardInfo.getVisibility(),
+				boardInfo.getCategory(),
+				LocalDateTime.now(), null);
+
+		// 기존 태그를 전부 삭제 후 새로운 태그로 교체
+		boardTagRepository.deleteByBoardId(boardEntity.getId());
+		boardTagRepository.flush(); // 태그 삭제 flush
+		boardTagRepository.saveAll(BoardTagEntity.toEntity(boardInfo.getTags(), boardEntity.getId()));
+
+	}
+
+	@Transactional
+	public void modifyBoard(HttpServletRequest request, BoardWriteRequest boardInfo) {
+
+		String userId = jwtManager.getUserId(request);
+		// 임시 저장한 게시글 가져오기
+		BoardEntity boardEntity = boardRepository.findByUserIdAndStatus(userId, BoardStatus.DRAFT);
+		// 게시글 수정
+		boardEntity.changeValue(boardInfo.getTitle(), boardInfo.getContentValue().getContent(),
+				boardInfo.getContentValue().getContentHtml(), boardInfo.getPlace(), boardInfo.getTravelStartAt(),
+				boardInfo.getTravelEndAt(), boardInfo.getStatus(), boardInfo.getVisibility(),
+				boardInfo.getCategory(),
+				boardEntity.getCreatedAt(), LocalDateTime.now());
 
 		// 기존 태그를 전부 삭제 후 새로운 태그로 교체
 		boardTagRepository.deleteByBoardId(boardEntity.getId());
@@ -323,6 +334,18 @@ public class BoardService {
 		draftData.setExtraImgIds(extraImgIds);
 
 		return draftData;
+	}
+
+	public BoardDetailResponse getBoardDetail(HttpServletRequest request, Long boardId) {
+		String userId = "";
+		try {
+			userId = jwtManager.getUserId(request);
+		} catch (Exception e) {
+		}
+		BoardDetailResponse detailRes = boardMapper.getBoardDetail(userId, boardId);
+		List<BoardTagEntity> tagList = boardTagRepository.findByBoardId(boardId); // 태그 조회
+
+		return detailRes.toBuilder().tags(BoardTagEntity.toList(tagList)).build();
 	}
 
 }

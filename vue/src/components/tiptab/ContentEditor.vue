@@ -1,6 +1,6 @@
 <template>
 	<div class="h-full">
-		<div className="toolbar">
+		<div v-if="editable" className="toolbar">
 			<button
 				@click="editor?.chain().focus().toggleBold().run()"
 				class="toolbar-btn"
@@ -200,7 +200,7 @@ import axios, { AxiosError, type AxiosResponse } from "axios";
 import type { ErrorResponse } from "../common/types/response/ErrorResponse";
 import { useSpinnerStore } from "@/stores/Spinner";
 
-const props = defineProps(["modelValue"]);
+const props = defineProps(["modelValue", "editable"]);
 const emit = defineEmits<{
 	(e: "update:modelValue", content: ContentEditorModelValue): void;
 	(e: "draft"): void;
@@ -211,8 +211,8 @@ const currentFontSize = ref<number>(10);
 const isFontSizeMenuOpen = ref(false);
 const fileInput = ref<HTMLInputElement | null>();
 const editor = useEditor({
-	content: "<p></p>",
-
+	content: props.modelValue,
+	editable: props.editable,
 	extensions: [
 		StarterKit,
 		TextAlign.configure({
@@ -224,7 +224,7 @@ const editor = useEditor({
 		Image.configure({
 			// 내장 리사이즈 기능 활성화 (상, 하, 좌, 우, 대각선 핸들 자동 생성)
 			resize: {
-				enabled: true,
+				enabled: props.editable,
 				alwaysPreserveAspectRatio: true,
 			},
 		}),
@@ -424,6 +424,7 @@ const handleBodyClick = () => {
 watch(
 	() => props.modelValue,
 	(value) => {
+		console.log(props.modelValue.contentHtml);
 		editor?.value
 			?.chain()
 			.focus()

@@ -5,6 +5,7 @@ import MainPage from "../pages/home/MainPage.vue";
 import DefaultLayout from "@/pages/layout/DefaultLayout.vue";
 import LoginPage from "@/pages/login/LoginPage.vue";
 import BoardWrite from "@/pages/board/write/BoardWrite.vue";
+import BoardDetail from "@/pages/board/detail/BoardDetail.vue";
 
 const routes = [
 	{
@@ -20,6 +21,11 @@ const routes = [
 				path: "/board/write",
 				name: "boardWrite",
 				component: BoardWrite,
+			},
+			{
+				path: "/board/detail/:id",
+				name: "boardDetail",
+				component: BoardDetail,
 			},
 		],
 	},

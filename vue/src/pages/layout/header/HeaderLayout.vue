@@ -1,5 +1,5 @@
 <template>
-	<div class="header-area">
+	<div class="header-area fixed z-999">
 		<div class="logo-area">
 			<span class="title">여행 커뮤니티</span>
 		</div>
@@ -91,8 +91,6 @@ import BellDropDown from "./components/BellDropDown.vue";
 import ProfileDropDown from "./components/ProfileDropDown.vue";
 import { DropdownType } from "./types/DropdownType.ts";
 import { useAuthStore } from "@/stores/Auth.ts";
-import { hasCookie } from "@/utills/CookieUtil.ts";
-import axios, { AxiosError } from "axios";
 
 const route = useRoute();
 const userId = ref<string | null>(null);
@@ -104,10 +102,6 @@ const handleBodyClick = () => {
 };
 
 onMounted(() => {
-	// CSRF 토큰 없으면 서버에서 생성
-	if (!hasCookie("XSRF-TOKEN=")) {
-		axios.get("/web/api/account/csrf");
-	}
 	auth.tokenLogin();
 	window.addEventListener("click", handleBodyClick);
 });
