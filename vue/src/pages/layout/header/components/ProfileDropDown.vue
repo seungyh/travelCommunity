@@ -1,7 +1,17 @@
 <template>
 	<div class="profile-img" @click.stop>
 		<div class="absolute">
-			<img :src="src" alt="Avatar" class="w-12 h-12 object-cover" />
+			<img
+				v-if="auth.getProfileImagePath()"
+				class="rounded-full w-12 h-12"
+				:src="getImageSrc(auth.getProfileImagePath())"
+			/>
+			<img
+				v-else
+				:src="src"
+				alt="Avatar"
+				class="rounded-full w-12 h-12 bg-gray-300"
+			/>
 			<Transition>
 				<div
 					v-if="openDropdownType == DropdownType.PROFILE"
@@ -72,11 +82,17 @@ const logoutProcess = () => {
 };
 const src = computed(() => {
 	const url = new URL("https://api.dicebear.com/10.x/lorelei/svg");
-	url.searchParams.set("seed", props.userId);
+	url.searchParams.set("seed", auth.getNickName());
 	url.searchParams.set("size", "50");
 
 	return url.href;
 });
+// 프로필 이미지 경로 반환
+const getImageSrc = (path: string) => {
+	return path.startsWith("http")
+		? path
+		: `/web/api/file?path=${encodeURIComponent(path)}`;
+};
 </script>
 <style scoped>
 .profile-img {
@@ -84,7 +100,6 @@ const src = computed(() => {
 	border-radius: 25px;
 	width: 50px;
 	height: 50px;
-	border: 1px solid black;
 	cursor: pointer;
 }
 </style>

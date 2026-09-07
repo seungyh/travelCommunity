@@ -13,4 +13,5 @@ public class LoginResponse {
     private String userId; // 사용자 ID
     private String nickName; // 닉네임
     private String email; // 이메일
+    private String profileImagePath; // 프로필 이미지 경로
 }

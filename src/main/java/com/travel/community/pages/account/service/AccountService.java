@@ -1,21 +1,20 @@
 package com.travel.community.pages.account.service;
 
-import java.util.Optional;
-
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.travel.community.global.exception.BusinessException;
 import com.travel.community.global.security.jwt.JwtManager;
-import com.travel.community.global.security.jwt.dto.TokenDto;
 import com.travel.community.pages.account.dto.request.LoginRequest;
 import com.travel.community.pages.account.dto.request.SignUpRequest;
 import com.travel.community.pages.account.dto.response.LoginResponse;
+import com.travel.community.pages.account.entity.ProfileEntity;
 import com.travel.community.pages.account.entity.UserEntity;
 import com.travel.community.pages.account.enums.Roles;
 import com.travel.community.pages.account.enums.UserResponseMsg;
 import com.travel.community.pages.account.exception.enums.AccountErrorCode;
 import com.travel.community.pages.account.repository.AccountRepository;
+import com.travel.community.pages.account.repository.ProfileRepository;
 import com.travel.community.pages.common.dto.response.CommonResponse;
 import com.travel.community.pages.oauth.enums.ProviderType;
 
@@ -31,6 +30,7 @@ public class AccountService {
 
     private final AccountRepository accountRepository;
     private final PasswordEncoder passwordEncoder;
+    private final ProfileRepository profileRepository;
     private final JwtManager jwtManager;
 
     public CommonResponse signUp(SignUpRequest request) {
@@ -71,7 +71,10 @@ public class AccountService {
         String token = jwtManager.createJwt(user.getUserId(), ProviderType.LOCAL);
         jwtManager.addCookie(response, token);
 
+        ProfileEntity profile = profileRepository.findByUserId(user.getUserId());
+
         return LoginResponse.builder().email(user.getEmail()).nickName(user.getNickName()).userId(user.getUserId())
+                .profileImagePath(profile.getPath())
                 .build();
     }
 
@@ -93,7 +96,9 @@ public class AccountService {
         UserEntity userEntity = accountRepository.findByUserId(userId).get();
         String email = userEntity.getEmail();
         String nickName = userEntity.getNickName();
-        return LoginResponse.builder().userId(userId).email(email).nickName(nickName).build();
+        ProfileEntity profile = profileRepository.findByUserId(userEntity.getUserId());
+        return LoginResponse.builder().userId(userId).email(email).nickName(nickName)
+                .profileImagePath(profile.getPath()).build();
 
     }
 

@@ -26,13 +26,13 @@ import lombok.NoArgsConstructor;
 public class ProfileEntity extends CommonFileEntity {
 
     @Column(name = "user_id", nullable = false)
-    private Long userId; // users 테이블 id
+    private String userId; // userId
 
     public void setPath(String path) {
         this.path = path;
     }
 
-    public static ProfileEntity create(String originFileName, String path, Long userId) {
+    public static ProfileEntity create(String originFileName, String path, String userId) {
         ProfileEntity profileEntity = new ProfileEntity();
 
         profileEntity.originalName = originFileName;

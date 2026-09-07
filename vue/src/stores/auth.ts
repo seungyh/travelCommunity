@@ -11,8 +11,10 @@ import router from "@/router";
  */
 export const useAuthStore = defineStore("auth", () => {
 	const isLogin = ref(false); // 로그인 여부
-	const email = ref(""); // 로그인한 사용자 이메일
-	const nickName = ref(""); // 로그인한 사용자 닉네임
+	const email = ref(""); // 사용자 이메일
+	const nickName = ref(""); // 사용자 닉네임
+	const userId = ref(""); // user id
+	const profileImagePath = ref(""); // 프로필 이미지 경로
 
 	// 로그인 상태 저장
 	const setLogin = () => {
@@ -38,8 +40,21 @@ export const useAuthStore = defineStore("auth", () => {
 		return nickName.value;
 	};
 	// 로그인 상태 가져오기
-	const getLogin = (): boolean => {
+	const getLogin = () => {
 		return isLogin.value;
+	};
+
+	const setUserId = (id: string) => {
+		userId.value = id;
+	};
+	const getUserId = () => {
+		return userId.value;
+	};
+	const setProfileImagePath = (path: string) => {
+		profileImagePath.value = path;
+	};
+	const getProfileImagePath = () => {
+		return profileImagePath.value;
 	};
 
 	// 일반 로그인
@@ -47,8 +62,8 @@ export const useAuthStore = defineStore("auth", () => {
 		axios
 			.post("/web/api/account/login", loginRequest)
 			.then((res: AxiosResponse<LoginResponse>) => {
-				console.log("res", res);
 				successLogin(res.data);
+				router.push("/");
 			})
 			.catch((error: AxiosError<ErrorResponse>) => {
 				console.log(error);
@@ -77,10 +92,12 @@ export const useAuthStore = defineStore("auth", () => {
 		setLogin();
 		setEmail(res.email);
 		setNickName(res.nickName);
-		router.push("/");
+		setUserId(res.userId);
+		setProfileImagePath(res.profileImagePath);
 	};
 	return {
 		isLogin,
+		getUserId,
 		login,
 		setLogin,
 		setLogout,
@@ -90,5 +107,6 @@ export const useAuthStore = defineStore("auth", () => {
 		getEmail,
 		setNickName,
 		getNickName,
+		getProfileImagePath,
 	};
 });

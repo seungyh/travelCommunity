@@ -38,7 +38,7 @@ public class UserEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "user_id", nullable = false, unique = true)
+    @Column(name = "user_id", unique = true)
     private String userId; // 사용자 id
 
     @Column(nullable = false)
@@ -68,7 +68,7 @@ public class UserEntity {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt; // 자기 정보 변경일
 
-    public void setUserId(Long id) {
-        this.id = id;
+    public void setUserId(String id) {
+        this.userId = id;
     }
 }
