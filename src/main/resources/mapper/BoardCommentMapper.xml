@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.travel.community.pages.board.repository.BoardCommentMapper">
+	<select id="getComments" resultType="com.travel.community.pages.board.dto.BoardCommentInfo">
+		SELECT
+			comment.id,
+			comment.parent_id AS parentId,
+			comment.content AS content,
+			comment.created_at AS createdAt,
+			comment.user_id AS userId,
+			comment.board_id AS boardId,
+			users.nickname AS nickName,
+			profile.path AS profileImagePath,
+			comment.is_del AS isDel
+		FROM 
+			comment comment
+		LEFT JOIN 
+			users users
+		ON 
+			users.user_id = comment.user_id
+		LEFT JOIN
+			profile_files profile
+		ON
+			users.user_id = profile.user_id
+		WHERE 
+			comment.board_id = #{boardId}
+		ORDER BY
+			CASE
+				WHEN comment.parent_id = 0 THEN comment.id
+				ELSE comment.parent_id
+			END,
+			comment.depth,
+			comment.created_at ASC
+    </select>
+</mapper>

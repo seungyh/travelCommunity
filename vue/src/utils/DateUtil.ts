@@ -26,4 +26,5 @@ export const getDiffDateFromToday = (createdAt: Date | null | undefined) => {
 	if (today.getSeconds() - createdDate.getSeconds() > 0) {
 		return `${today.getSeconds() - createdDate.getSeconds()}초 전`;
 	}
+	return "방금 전";
 };

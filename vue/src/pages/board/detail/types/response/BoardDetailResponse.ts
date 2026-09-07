@@ -16,7 +16,7 @@ export interface BoardDetailResponse {
 	travelEndAt: Date; // 여행 종료일
 	tags: string[]; // 해시태그
 	boardFeatureId: number | string; // 대표 이미지 id
-	profileImageId: number | string; // 프로필 이미지 id
+	profileImagePath: string; // 프로필 이미지 path
 	userId: string; // 작성자 id
 	nickName: string; // 작성자 nickName
 	bio: string; // 작성자 간단 자기소개

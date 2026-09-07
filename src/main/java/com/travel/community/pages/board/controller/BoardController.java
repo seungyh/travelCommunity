@@ -14,7 +14,9 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.travel.community.pages.board.dto.BoardSearchFilter;
+import com.travel.community.pages.board.dto.request.BoardCommentRequest;
 import com.travel.community.pages.board.dto.request.BoardWriteRequest;
+import com.travel.community.pages.board.dto.response.BoardCommentResponse;
 import com.travel.community.pages.board.dto.response.BoardDetailResponse;
 import com.travel.community.pages.board.dto.response.BoardDraftResponse;
 import com.travel.community.pages.board.dto.response.BoardLikeResponse;
@@ -163,5 +165,39 @@ public class BoardController {
     @GetMapping("/{boardId}")
     public ResponseEntity<BoardDetailResponse> getBoardDetail(HttpServletRequest request, @PathVariable Long boardId) {
         return ResponseEntity.ok(boardService.getBoardDetail(request, boardId));
+    }
+
+    /**
+     * 게시글 댓글 등록
+     * 
+     * @param request
+     * @param addCommentInfo
+     * @return
+     */
+    @PostMapping("/comment")
+    public ResponseEntity<BoardCommentResponse> addComment(HttpServletRequest request,
+            @Valid @RequestBody BoardCommentRequest addCommentInfo) {
+        return ResponseEntity.ok(boardService.addComment(request, addCommentInfo));
+    }
+
+    /**
+     * 게시글 댓글 조회
+     * 
+     * @param request
+     * @param addCommentInfo
+     * @return
+     */
+    @GetMapping("/comment/{boardId}")
+    public ResponseEntity<BoardCommentResponse> getComments(HttpServletRequest request, @PathVariable Long boardId) {
+        return ResponseEntity.ok(boardService.getComments(boardId));
+    }
+
+    /**
+     * 댓글 삭제
+     */
+    @DeleteMapping("/comment/{commentId}")
+    public ResponseEntity<BoardCommentResponse> deleteComment(HttpServletRequest request,
+            @PathVariable Long commentId) {
+        return ResponseEntity.ok(boardService.deleteComment(request, commentId));
     }
 }

@@ -1,6 +1,7 @@
 package com.travel.community.pages.board.service;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -14,14 +15,18 @@ import org.springframework.web.multipart.MultipartFile;
 import com.travel.community.global.exception.BusinessException;
 import com.travel.community.global.security.jwt.JwtManager;
 import com.travel.community.global.utils.FileUtil;
+import com.travel.community.pages.board.dto.BoardCommentInfo;
 import com.travel.community.pages.board.dto.BoardFileAccessInfo;
 import com.travel.community.pages.board.dto.BoardInfo;
 import com.travel.community.pages.board.dto.BoardSearchFilter;
+import com.travel.community.pages.board.dto.request.BoardCommentRequest;
 import com.travel.community.pages.board.dto.request.BoardWriteRequest;
+import com.travel.community.pages.board.dto.response.BoardCommentResponse;
 import com.travel.community.pages.board.dto.response.BoardDetailResponse;
 import com.travel.community.pages.board.dto.response.BoardDraftResponse;
 import com.travel.community.pages.board.dto.response.BoardLikeResponse;
 import com.travel.community.pages.board.dto.response.BoardSearchResponse;
+import com.travel.community.pages.board.entity.BoardCommentEntity;
 import com.travel.community.pages.board.entity.BoardEntity;
 import com.travel.community.pages.board.entity.BoardImageEntity;
 import com.travel.community.pages.board.entity.BoardLikeEntity;
@@ -30,6 +35,8 @@ import com.travel.community.pages.board.enums.BoardFileType;
 import com.travel.community.pages.board.enums.BoardStatus;
 import com.travel.community.pages.board.enums.BoardVisibilityType;
 import com.travel.community.pages.board.exception.enums.BoardErrorCode;
+import com.travel.community.pages.board.repository.BoardCommentMapper;
+import com.travel.community.pages.board.repository.BoardCommentRepository;
 import com.travel.community.pages.board.repository.BoardImageRepository;
 import com.travel.community.pages.board.repository.BoardLikeRepository;
 import com.travel.community.pages.board.repository.BoardMapper;
@@ -57,7 +64,9 @@ public class BoardService {
 	private final BoardLikeRepository boardLikeRepository;
 	private final BoardMapper boardMapper;
 	private final FollowRepository followRepository;
+	private final BoardCommentRepository boardCommentRepository;
 	private final JwtManager jwtManager;
+	private final BoardCommentMapper boardCommentMapper;
 
 	private final RedisTemplate<String, Object> redisTemplate;
 
@@ -346,6 +355,62 @@ public class BoardService {
 		List<BoardTagEntity> tagList = boardTagRepository.findByBoardId(boardId); // 태그 조회
 
 		return detailRes.toBuilder().tags(BoardTagEntity.toList(tagList)).build();
+	}
+
+	@Transactional
+	public BoardCommentResponse addComment(HttpServletRequest request, BoardCommentRequest addCommentInfo) {
+		String userId = jwtManager.getUserId(request);
+		// 존재하는 게시글인지 체크
+		BoardEntity boardEntity = boardRepository.findById(addCommentInfo.getBoardId())
+				.orElseThrow(() -> new BusinessException(BoardErrorCode.NOT_EXIST_BOARD));
+
+		// 댓글 entity 생성
+		BoardCommentEntity entity = BoardCommentEntity.builder().boardId(addCommentInfo.getBoardId())
+				.content(addCommentInfo.getContent()).depth(addCommentInfo.getDepth()).userId(userId)
+				.parentId(addCommentInfo.getParentId()).createdAt(OffsetDateTime.now()).build();
+
+		// 댓글 저장
+		boardCommentRepository.save(entity);
+
+		// 게시글 데이터에 댓글 카운트 +1
+		boardEntity.setCommentCount(boardEntity.getCommentCount() + 1);
+
+		// 저장 후 댓글 전체 조회
+		List<BoardCommentInfo> commentList = boardCommentMapper.getComments(addCommentInfo.getBoardId());
+		return BoardCommentResponse.builder().boardCommentList(commentList).totalCount(boardEntity.getCommentCount())
+				.build();
+	}
+
+	public BoardCommentResponse getComments(Long boardId) {
+		List<BoardCommentInfo> commentList = boardCommentMapper.getComments(boardId);
+		// 삭제된 댓글 내용 지우기
+		commentList.forEach(comment -> {
+			comment.setDeletedComment();
+		});
+		return BoardCommentResponse.builder().boardCommentList(commentList).build();
+	}
+
+	@Transactional
+	public BoardCommentResponse deleteComment(HttpServletRequest request, Long commentId) {
+		String userId = jwtManager.getUserId(request);
+
+		// 작성자가 맞는지 확인
+		BoardCommentEntity comment = boardCommentRepository.findByUserIdAndId(userId, commentId)
+				.orElseThrow(() -> new BusinessException(BoardErrorCode.INVALID_ACCESS));
+
+		// 존재하는 게시글인지 체크
+		BoardEntity boardEntity = boardRepository.findById(comment.getBoardId())
+				.orElseThrow(() -> new BusinessException(BoardErrorCode.NOT_EXIST_BOARD));
+		comment.setIsDel(true);
+
+		boardCommentRepository.flush();
+
+		boardEntity.setCommentCount(boardEntity.getCommentCount() - 1);
+
+		// 삭제 후 댓글 전체 조회
+		List<BoardCommentInfo> commentList = boardCommentMapper.getComments(comment.getBoardId());
+		return BoardCommentResponse.builder().boardCommentList(commentList).totalCount(boardEntity.getCommentCount())
+				.build();
 	}
 
 }
