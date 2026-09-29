@@ -2,7 +2,7 @@
 	<div class="mb-10">
 		<div class="w-full justify-items-center relative">
 			<img
-				v-if="boardDetailInfo"
+				v-if="boardDetailInfo?.boardId"
 				class="w-[full] aspect-[2/1] object-cover"
 				:src="'/web/api/board/feature/' + boardDetailInfo?.boardId"
 			/>
@@ -31,7 +31,9 @@
 							:icon="['far', 'heart']"
 						/>
 						<span class="text-gray-600 text-lg ml-2">
-							{{ boardDetailInfo?.likeCount ?? 0 }}
+							{{
+								boardDetailInfo?.likeCount.toLocaleString() ?? 0
+							}}
 						</span>
 					</div>
 				</div>
@@ -56,12 +58,17 @@
 
 					<div class="flex items-center gap-1">
 						<font-awesome-icon :icon="['far', 'eye']" />
-						<span>{{ boardDetailInfo?.viewCount }}</span>
+						<span>{{
+							boardDetailInfo?.viewCount.toLocaleString()
+						}}</span>
 					</div>
 				</div>
 
 				<!-- 오른쪽: 수정, 삭제 -->
-				<div class="flex items-center gap-2">
+				<div
+					v-if="auth.getUserId() === boardDetailInfo.userId"
+					class="flex items-center gap-2"
+				>
 					<button
 						class="text-gray-400 hover:text-gray-700 cursor-pointer"
 					>
@@ -84,9 +91,15 @@
 			>
 				<div class="flex flex-row mt-1">
 					<img
-						:src="getAvatar('nick')"
+						v-if="boardDetailInfo.profileImagePath"
+						class="rounded-full w-[40px] h-[40px] mr-2"
+						:src="getImageSrc(boardDetailInfo.profileImagePath)"
+					/>
+					<img
+						v-else
+						:src="getAvatar(boardDetailInfo.nickName)"
 						alt="Avatar"
-						class="w-12 h-12 object-cover"
+						class="rounded-full w-[40px] h-[40px] bg-gray-300 mr-2"
 					/>
 					<div>
 						<div class="font-bold text-lg">
@@ -100,7 +113,8 @@
 				</div>
 				<div class="flex flex-row mt-1">
 					<div class="text-gray-600 text-md">
-						게시글 {{ boardDetailInfo?.commentCount }}개
+						게시글
+						{{ boardDetailInfo?.boardCount.toLocaleString() }}개
 					</div>
 					<div class="ml-2">
 						<button
@@ -157,7 +171,7 @@
 					</div>
 					<div>
 						<div class="font-bold text-lg">
-							{{ boardDetailInfo?.likeCount }}
+							{{ boardDetailInfo?.likeCount.toLocaleString() }}
 						</div>
 						<div class="text-gray-600 text-sm">
 							이 글이 도움이 되었나요?
@@ -178,7 +192,8 @@
 			<!-- 댓글 영역 -->
 			<div class="mt-10">
 				<span class="text-xl font-bold"
-					>댓글 {{ boardDetailInfo.commentCount }}개</span
+					>댓글
+					{{ boardDetailInfo.commentCount.toLocaleString() }}개</span
 				>
 				<div
 					v-if="auth.isLogin"
@@ -421,6 +436,7 @@ import type { BoardCommentResponse } from "./types/response/BoardCommentResponse
 const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
+
 const { startSpinner, endSpinner } = useSpinnerStore();
 
 const MAX_COMMENT_LENGTH = 500; // 댓글 글자 수 제한
@@ -463,7 +479,7 @@ const reCommentInputOpen = ref<number | null>(null); // 대댓글 입력 창 오
 const getImageSrc = (path: string) => {
 	return path.startsWith("http")
 		? path
-		: `/web/api/file?path=${encodeURIComponent(path)}`;
+		: `/web/api/account/profile?path=${encodeURIComponent(path)}`;
 };
 // 댓글 500자 제한
 const limitCommentLength = (depth: number) => {
@@ -606,6 +622,26 @@ const getAvatar = (nickName: string) => {
 	url.searchParams.set("size", "50");
 
 	return url.href;
+};
+
+// 게시글 삭제
+const deleteBoard = () => {
+	if (!confirm("정말로 게시글을 삭제하시겠습니까?")) {
+		return;
+	}
+	startSpinner();
+	axios
+		.delete(`/web/api/board/${boardDetailInfo.value.boardId}`)
+		.then(() => {
+			alert("게시글이 삭제되었습니다.");
+		})
+		.catch((res: AxiosError<ErrorResponse>) => {
+			alert(res.response?.data.errorMessage);
+		})
+		.finally(() => {
+			endSpinner();
+			router.push("/");
+		});
 };
 onMounted(() => {
 	getBoardDetail(route.params.id);

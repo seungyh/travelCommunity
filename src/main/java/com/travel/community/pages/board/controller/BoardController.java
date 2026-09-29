@@ -200,4 +200,17 @@ public class BoardController {
             @PathVariable Long commentId) {
         return ResponseEntity.ok(boardService.deleteComment(request, commentId));
     }
+
+    /**
+     * 게시글 삭제
+     * 
+     * @param request
+     * @param boardId
+     * @return
+     */
+    @DeleteMapping("/{boardId}")
+    public ResponseEntity<Void> deleteBoard(HttpServletRequest request, @PathVariable Long boardId) {
+        boardService.deleteBoard(request, boardId);
+        return ResponseEntity.noContent().build();
+    }
 }

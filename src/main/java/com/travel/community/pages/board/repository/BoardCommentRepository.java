@@ -12,4 +12,6 @@ public interface BoardCommentRepository extends JpaRepository<BoardCommentEntity
 
     Optional<BoardCommentEntity> findByUserIdAndId(String userId, Long commentId);
 
+    void deleteByBoardId(Long boardId);
+
 }

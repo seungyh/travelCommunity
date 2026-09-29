@@ -1,9 +1,9 @@
 package com.travel.community.pages.board.service;
 
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -14,7 +14,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.travel.community.global.exception.BusinessException;
 import com.travel.community.global.security.jwt.JwtManager;
+import com.travel.community.global.utils.DateUtil;
 import com.travel.community.global.utils.FileUtil;
+import com.travel.community.global.utils.IpUtil;
+import com.travel.community.pages.account.repository.AccountRepository;
 import com.travel.community.pages.board.dto.BoardCommentInfo;
 import com.travel.community.pages.board.dto.BoardFileAccessInfo;
 import com.travel.community.pages.board.dto.BoardInfo;
@@ -67,6 +70,7 @@ public class BoardService {
 	private final BoardCommentRepository boardCommentRepository;
 	private final JwtManager jwtManager;
 	private final BoardCommentMapper boardCommentMapper;
+	private final AccountRepository accountRepository;
 
 	private final RedisTemplate<String, Object> redisTemplate;
 
@@ -101,7 +105,7 @@ public class BoardService {
 				boardInfo.getContentValue().getContentHtml(), boardInfo.getPlace(), boardInfo.getTravelStartAt(),
 				boardInfo.getTravelEndAt(), boardInfo.getStatus(), boardInfo.getVisibility(),
 				boardInfo.getCategory(),
-				LocalDateTime.now(), null);
+				OffsetDateTime.now(), null);
 
 		// 기존 태그를 전부 삭제 후 새로운 태그로 교체
 		boardTagRepository.deleteByBoardId(boardEntity.getId());
@@ -121,7 +125,7 @@ public class BoardService {
 				boardInfo.getContentValue().getContentHtml(), boardInfo.getPlace(), boardInfo.getTravelStartAt(),
 				boardInfo.getTravelEndAt(), boardInfo.getStatus(), boardInfo.getVisibility(),
 				boardInfo.getCategory(),
-				boardEntity.getCreatedAt(), LocalDateTime.now());
+				boardEntity.getCreatedAt(), OffsetDateTime.now());
 
 		// 기존 태그를 전부 삭제 후 새로운 태그로 교체
 		boardTagRepository.deleteByBoardId(boardEntity.getId());
@@ -141,8 +145,11 @@ public class BoardService {
 		String userId = jwtManager.getUserId(jwtManager.getJwt(request));
 
 		BoardEntity boardEntity = BoardEntity.builder().title(boardInfo.getTitle())
-				.content(boardInfo.getContentValue().getContent())
-				.contentHtml(boardInfo.getContentValue().getContentHtml())
+				.content(boardInfo.getContentValue() != null ? boardInfo.getContentValue().getContent()
+						: null)
+				.contentHtml(boardInfo.getContentValue() != null
+						? boardInfo.getContentValue().getContentHtml()
+						: null)
 				.userId(userId)
 				.place(boardInfo.getPlace()).travelStartAt(boardInfo.getTravelStartAt())
 				.travelEndAt(boardInfo.getTravelEndAt()).status(boardInfo.getStatus())
@@ -153,7 +160,9 @@ public class BoardService {
 
 		// 태그 저장
 		List<BoardTagEntity> tagEntityList = BoardTagEntity.toEntity(boardInfo.getTags(), boardEntity.getId());
-		boardTagRepository.saveAll(tagEntityList);
+		if (!tagEntityList.isEmpty()) {
+			boardTagRepository.saveAll(tagEntityList);
+		}
 
 		return boardEntity.getId();
 	}
@@ -201,7 +210,8 @@ public class BoardService {
 
 		// 임시 저장된게 없으면 게시글 빈 내용으로 임시 저장 데이터 생성
 		if (boardEntity == null) {
-			boardId = addBoard(request, BoardWriteRequest.builder().build());
+			boardId = addBoard(request, BoardWriteRequest.builder().status(BoardStatus.DRAFT)
+					.visibility(BoardVisibilityType.PUBLIC).build());
 		} else {
 			boardId = boardEntity.getId();
 		}
@@ -318,6 +328,12 @@ public class BoardService {
 
 	}
 
+	/**
+	 * 게시글 작성/수정 중 업로드 파일 삭제
+	 * 
+	 * @param request
+	 * @param fileId
+	 */
 	public void deleteImage(HttpServletRequest request, Long fileId) {
 		String userId = jwtManager.getUserId(request);
 
@@ -345,6 +361,7 @@ public class BoardService {
 		return draftData;
 	}
 
+	@Transactional
 	public BoardDetailResponse getBoardDetail(HttpServletRequest request, Long boardId) {
 		String userId = "";
 		try {
@@ -354,6 +371,28 @@ public class BoardService {
 		BoardDetailResponse detailRes = boardMapper.getBoardDetail(userId, boardId);
 		List<BoardTagEntity> tagList = boardTagRepository.findByBoardId(boardId); // 태그 조회
 
+		String redisViewKey = "board:view:hll:" + boardId;
+		String clientIp = IpUtil.getClientIP(request);
+
+		// HyperLogLog 공간 절약을 위해 사용, 오차가 존재하지만 중요하지 않은 조회수이므로 사용 100번중 1번 카운트 안될수 있음
+		Long result = redisTemplate.opsForHyperLogLog().add(redisViewKey, clientIp);
+
+		if (result != null && result > 0) { // 비로그인 회원의 조회수 체크를 위해 ip로 조회수 카운트
+
+			Long expire = redisTemplate.getExpire(redisViewKey);
+
+			// 해당 키로 적용된 ttl이 없으면 자정까지 ttl 적용
+			if (expire != null && expire < 0) {
+				// ttl 적용
+				long secondUnitMidnight = DateUtil.getSecondsUntilMidnight();
+				redisTemplate.expire(redisViewKey, secondUnitMidnight, TimeUnit.SECONDS);
+			}
+			// db 조회 카운트 +1
+			BoardEntity boardEntity = boardRepository.findById(boardId)
+					.orElseThrow(() -> new BusinessException(BoardErrorCode.NOT_EXIST_BOARD));
+			boardEntity.setViewCount(boardEntity.getViewCount() + 1);
+
+		}
 		return detailRes.toBuilder().tags(BoardTagEntity.toList(tagList)).build();
 	}
 
@@ -411,6 +450,27 @@ public class BoardService {
 		List<BoardCommentInfo> commentList = boardCommentMapper.getComments(comment.getBoardId());
 		return BoardCommentResponse.builder().boardCommentList(commentList).totalCount(boardEntity.getCommentCount())
 				.build();
+	}
+
+	@Transactional
+	public void deleteBoard(HttpServletRequest request, Long boardId) {
+		String userId = jwtManager.getUserId(request);
+
+		// 게시글 작성자인지 체크
+		boardRepository.findByIdAndUserId(boardId, userId)
+				.orElseThrow(() -> new BusinessException(BoardErrorCode.INVALID_ACCESS));
+
+		List<BoardImageEntity> imageList = boardImageRepository.findByBoardId(boardId); // 게시글 이미지 조회
+
+		for (BoardImageEntity img : imageList) {
+			FileUtil.deleteFile(BASE_PATH + img.getPath()); // 실제 파일 삭제
+		}
+		boardImageRepository.deleteByBoardId(boardId); // 게시글 이미지 삭제
+		boardCommentRepository.deleteByBoardId(boardId); // 댓글 삭제
+		boardLikeRepository.deleteByBoardId(boardId); // 게시글 좋아요 삭제
+		boardTagRepository.deleteByBoardId(boardId); // 게시글 태그 삭제
+		boardRepository.deleteById(boardId); // 게시글 삭제
+
 	}
 
 }

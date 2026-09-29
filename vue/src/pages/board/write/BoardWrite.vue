@@ -27,7 +27,7 @@
 			<div>
 				<input
 					v-model="boardData.title"
-					@input="limitTitleLength()"
+					maxlength="100"
 					type="text"
 					placeholder="여행의 제목을 입력하세요..."
 					class="h-[40px] text-2xl w-full font-[700] board-title custom-input"
@@ -62,6 +62,7 @@
 								class="form-control w-[96%] cursor-pointer"
 								placeholder="시작한 여행 날짜를 선택하세요"
 								name="date"
+								autocomplete="off"
 							/>
 							<span
 								class="absolute text-gray-500 -translate-y-1/2 pointer-events-none left-1 top-1/2 dark:text-gray-400"
@@ -79,6 +80,7 @@
 								class="form-control w-[96%] cursor-pointer"
 								placeholder="마지막 여행 날짜를 선택하세요"
 								name="date"
+								autocomplete="off"
 							/>
 							<span
 								class="absolute text-gray-500 -translate-y-1/2 pointer-events-none left-1 top-1/2 dark:text-gray-400"
@@ -398,7 +400,6 @@ import type { DraftResponse } from "./types/response/DraftResponse";
 import { useSpinnerStore } from "@/stores/Spinner";
 
 const { startSpinner, endSpinner } = useSpinnerStore();
-const MAX_TITLE_LENGTH = 100; // 제목 글자 수 제한
 const previewSrc = ref<string>(""); // 대표 이미지 미리보기
 const extraSrcs = ref<string[]>([]); // 추가 이미지
 const fileInput = ref<HTMLInputElement | null>(null); // 대표 이미지 input 주소값
@@ -442,14 +443,6 @@ const config = ref({
 	positionElement: undefined,
 	locale: Korean,
 });
-
-// 제목 길이 100자 제한
-const limitTitleLength = () => {
-	boardData.value.title = boardData.value.title.substring(
-		0,
-		MAX_TITLE_LENGTH,
-	);
-};
 
 // 임시 저장
 const draft = () => {
@@ -623,7 +616,9 @@ const releaseFeatureImgMemory = () => {
 	}
 };
 // 임시 저장 데이터 삭제
-const deleteDraft = (boardId: number) => {};
+const deleteDraft = (boardId: number) => {
+	axios.delete(`/web/api/board/${boardId}`);
+};
 // 임시저장된 게시글 조회
 const getDraft = () => {
 	startSpinner();

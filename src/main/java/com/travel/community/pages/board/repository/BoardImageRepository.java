@@ -13,4 +13,8 @@ public interface BoardImageRepository extends JpaRepository<BoardImageEntity, Lo
 
     List<BoardImageEntity> findByBoardIdAndType(Long id, BoardFileType feature);
 
+    void deleteByBoardId(Long boardId);
+
+    List<BoardImageEntity> findByBoardId(Long boardId);
+
 }
