@@ -2,6 +2,7 @@ package com.travel.community.global.utils;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
@@ -72,5 +73,22 @@ public class FileUtil {
      */
     public static String getDatePath() {
         return LocalDate.now().format(FILE_PATH_DATE_FORMATTER) + "/";
+    }
+
+    /**
+     * 파일 삭제
+     * 
+     * @param path
+     */
+    public static void deleteFile(String path) {
+        try {
+            boolean deleted = Files.deleteIfExists(Paths.get(path));
+
+            if (!deleted) {
+                log.info("Not Exist File: {}", path);
+            }
+        } catch (IOException e) {
+            log.error("Failed to delete file: {}", path, e);
+        }
     }
 }
