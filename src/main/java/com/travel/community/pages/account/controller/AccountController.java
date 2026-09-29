@@ -1,13 +1,17 @@
 package com.travel.community.pages.account.controller;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.travel.community.global.utils.FileUtil;
 import com.travel.community.pages.account.dto.request.LoginRequest;
 import com.travel.community.pages.account.dto.request.SignUpRequest;
 import com.travel.community.pages.account.dto.response.LoginResponse;
@@ -24,6 +28,9 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @RequestMapping("/web/api/account")
 public class AccountController {
+
+    @Value("${file.images.base-path}")
+    private String BASE_PATH; // BASE 경로
 
     private final AccountService service;
     private final NickNameCreator nickNameCreator;
@@ -93,5 +100,16 @@ public class AccountController {
     @GetMapping("/nickName")
     public ResponseEntity<String> getRandomNickName() {
         return ResponseEntity.ok(nickNameCreator.getNickName());
+    }
+
+    /**
+     * profile 이미지 Resource로 반환
+     * 
+     * @param id
+     * @return
+     */
+    @GetMapping("/profile")
+    public ResponseEntity<Resource> getProfileImage(@RequestParam String path) {
+        return ResponseEntity.ok(FileUtil.getResource(BASE_PATH + path));
     }
 }
