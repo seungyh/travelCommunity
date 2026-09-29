@@ -1,12 +1,9 @@
 package com.travel.community.pages.account.service;
 
-import java.security.SecureRandom;
 import java.util.EnumMap;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
