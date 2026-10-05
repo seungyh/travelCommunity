@@ -34,6 +34,7 @@ import com.travel.community.pages.board.entity.BoardEntity;
 import com.travel.community.pages.board.entity.BoardImageEntity;
 import com.travel.community.pages.board.entity.BoardLikeEntity;
 import com.travel.community.pages.board.entity.BoardTagEntity;
+import com.travel.community.pages.board.entity.FollowEntity;
 import com.travel.community.pages.board.enums.BoardFileType;
 import com.travel.community.pages.board.enums.BoardStatus;
 import com.travel.community.pages.board.enums.BoardVisibilityType;
@@ -470,6 +471,19 @@ public class BoardService {
 		boardLikeRepository.deleteByBoardId(boardId); // 게시글 좋아요 삭제
 		boardTagRepository.deleteByBoardId(boardId); // 게시글 태그 삭제
 		boardRepository.deleteById(boardId); // 게시글 삭제
+
+	}
+
+	public void toggleFollow(HttpServletRequest request, String boardUserId) {
+		String userId = jwtManager.getUserId(request);
+
+		FollowEntity followEntity = followRepository.findByFollowerIdAndFollowingId(userId, boardUserId).orElse(null);
+		if (followEntity == null) {
+			followEntity = FollowEntity.builder().followerId(userId).followingId(boardUserId).build();
+			followRepository.save(followEntity);
+		} else {
+			followRepository.deleteById(followEntity.getId());
+		}
 
 	}
 

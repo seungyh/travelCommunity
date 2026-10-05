@@ -213,4 +213,13 @@ public class BoardController {
         boardService.deleteBoard(request, boardId);
         return ResponseEntity.noContent().build();
     }
+
+    /**
+     * 팔로우 토글
+     */
+    @PatchMapping("/follow/{userId}")
+    public ResponseEntity<Void> toggleFollow(HttpServletRequest request, @PathVariable String userId) {
+        boardService.toggleFollow(request, userId);
+        return ResponseEntity.noContent().build();
+    }
 }

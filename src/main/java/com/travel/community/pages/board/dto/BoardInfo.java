@@ -20,7 +20,7 @@ public class BoardInfo {
     private Long boardId; // 게시글 id
     private String userId; // 작성자 id
     private String nickName; // 작성자 nickName
-    private boolean isFollow; // 나의 팔로우 여부
+    private boolean follow; // 나의 팔로우 여부
     private String title; // 제목
     private String content; // 내용
     private int likeCount; // 좋아요 개수
