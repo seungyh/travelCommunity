@@ -50,11 +50,10 @@ public class JwtManager {
                 SECRET_KEY.getBytes(StandardCharsets.UTF_8));
     }
 
-    public String createJwt(String userId, ProviderType type) {
+    public String createJwt(String userId) {
         Date now = new Date();
         return Jwts.builder()
                 .subject(userId)
-                .claim("provider", type.name())
                 .issuedAt(now)
                 .expiration(new Date(System.currentTimeMillis() + EXPIRED_TIME))
                 .signWith(key)
@@ -139,5 +138,18 @@ public class JwtManager {
         cookie.setMaxAge(EXPIRED_TIME); // 쿠키 만료시간
 
         response.addCookie(cookie);
+    }
+
+    /**
+     * jwt 및 쿠키 갱신
+     * 
+     * @param request
+     * @param response
+     * @param token
+     */
+    public void refreshJwtCookie(HttpServletRequest request, HttpServletResponse response) {
+        String userId = getUserId(request);
+        String newJwt = createJwt(userId);
+        addCookie(response, newJwt);
     }
 }

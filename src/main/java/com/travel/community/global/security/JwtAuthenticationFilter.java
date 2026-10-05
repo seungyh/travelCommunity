@@ -57,6 +57,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 					SecurityContextHolder.getContext()
 							.setAuthentication(authentication);
 
+					// jwt 갱신
+					jwtManager.refreshJwtCookie(request, response);
+
 				} catch (Exception e) {
 					tokenDeleteProcess(response);
 					SecurityContextHolder.clearContext();
