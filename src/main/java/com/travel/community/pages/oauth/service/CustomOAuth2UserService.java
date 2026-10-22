@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.travel.community.pages.account.entity.ProfileEntity;
 import com.travel.community.pages.account.entity.UserEntity;
+import com.travel.community.pages.account.enums.ProfileImgType;
 import com.travel.community.pages.account.enums.Roles;
 import com.travel.community.pages.account.repository.AccountRepository;
 import com.travel.community.pages.account.repository.ProfileRepository;
@@ -47,10 +48,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         String providerId = String.valueOf(oauth2User.getAttributes().get("id"));
         String profileImage = (String) properties.get("profile_image");
         OAuthEntity oauthEntity = oAuthRepository.findByProviderIdAndProvider(providerId, provider);
-        String nickName = nickNameCreator.getNickName();
         UserEntity userEntity = null;
         // 첫 로그인이면 DB 저장
         if (oauthEntity == null) {
+            String nickName = nickNameCreator.getNickName();
             // users 테이블에 저장 후 userId를 id로 설정
             userEntity = UserEntity.builder().nickName(nickName).role(Roles.USER).build();
             accountRepository.save(userEntity);
@@ -60,10 +61,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             oauthEntity = oAuthRepository.save(OAuthEntity.builder().providerId(providerId).provider(provider)
                     .userId(userEntity.getUserId()).build());
             // 프로필 이미지 저장
-            profileRepository.save(ProfileEntity.create(null, profileImage, userEntity.getUserId()));
-        } else {
-            ProfileEntity profileEntity = profileRepository.findByUserId(oauthEntity.getUserId());
-            profileEntity.setPath(profileImage);
+            profileRepository
+                    .save(ProfileEntity.create(null, profileImage, userEntity.getUserId(), ProfileImgType.PROFILE));
         }
 
         return new CustomOAuth2User(oauthEntity.getUserId(), provider, properties,

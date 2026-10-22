@@ -7,11 +7,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 
-import com.travel.community.global.exception.BusinessException;
 import com.travel.community.global.security.jwt.JwtManager;
 import com.travel.community.pages.oauth.dto.CustomOAuth2User;
-import com.travel.community.pages.oauth.enums.ProviderType;
-import com.travel.community.pages.oauth.exception.OAuthErrorCode;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -34,18 +31,19 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
             Authentication authentication) throws IOException, ServletException {
         CustomOAuth2User oauth2User = (CustomOAuth2User) authentication.getPrincipal();
-        ProviderType type = null;
-        switch (oauth2User.getProvider()) {
-            case "Kakao":
-                type = ProviderType.Kakao;
-                break;
+        // ProviderType type = null;
+        // switch (oauth2User.getProvider()) {
+        // case "Kakao":
+        // type = ProviderType.Kakao;
+        // break;
 
-            default:
-                throw new BusinessException(OAuthErrorCode.INVALID_OAUTH_PLATFORM);
+        // default:
+        // throw new BusinessException(OAuthErrorCode.INVALID_OAUTH_PLATFORM);
 
-        }
+        // }
 
-        String token = jwtManager.createJwt(oauth2User.getUserId().toString(), type);
+        // String token = jwtManager.createJwt(oauth2User.getUserId().toString(), type);
+        String token = jwtManager.createJwt(oauth2User.getUserId().toString());
         jwtManager.addCookie(response, token);
 
         response.sendRedirect(SUCCESS_URL);
