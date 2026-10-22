@@ -1,6 +1,5 @@
 package com.travel.community.global.security.config;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -13,6 +12,7 @@ import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 
 import com.travel.community.global.security.JwtAuthenticationFilter;
+import com.travel.community.global.security.JwtProtectedRequestMatcher;
 import com.travel.community.global.security.jwt.exception.CustomAuthenticationEntryPoint;
 import com.travel.community.pages.oauth.service.CustomOAuth2UserService;
 import com.travel.community.pages.oauth.service.OAuth2SuccessHandler;
@@ -24,8 +24,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-	@Value("${filter.auth-address}")
-	private String[] AUTH_ADDRESS;
+	private final JwtProtectedRequestMatcher protectedRequestMatcher;
 
 	private final JwtAuthenticationFilter jwtAuthenticationFilter;
 	private final CustomOAuth2UserService customOAuth2UserService;
@@ -45,7 +44,7 @@ public class SecurityConfig {
 						.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
 
 				.authorizeHttpRequests(auth -> auth
-						.requestMatchers(AUTH_ADDRESS)
+						.requestMatchers(protectedRequestMatcher)
 						.authenticated()
 						.anyRequest()
 						.permitAll())

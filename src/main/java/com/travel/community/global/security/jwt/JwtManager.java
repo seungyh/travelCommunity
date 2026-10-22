@@ -12,7 +12,6 @@ import org.springframework.web.util.WebUtils;
 
 import com.travel.community.global.exception.BusinessException;
 import com.travel.community.global.security.jwt.exception.JwtErrorCode;
-import com.travel.community.pages.oauth.enums.ProviderType;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
