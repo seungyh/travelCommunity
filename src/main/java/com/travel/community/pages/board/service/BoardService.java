@@ -18,6 +18,8 @@ import com.travel.community.global.utils.DateUtil;
 import com.travel.community.global.utils.FileUtil;
 import com.travel.community.global.utils.IpUtil;
 import com.travel.community.pages.account.repository.AccountRepository;
+import com.travel.community.pages.alarm.enmus.AlarmType;
+import com.travel.community.pages.alarm.service.AlarmService;
 import com.travel.community.pages.board.dto.BoardCommentInfo;
 import com.travel.community.pages.board.dto.BoardFileAccessInfo;
 import com.travel.community.pages.board.dto.BoardInfo;
@@ -72,6 +74,7 @@ public class BoardService {
 	private final JwtManager jwtManager;
 	private final BoardCommentMapper boardCommentMapper;
 	private final AccountRepository accountRepository;
+	private final AlarmService alarmService;
 
 	private final RedisTemplate<String, Object> redisTemplate;
 
@@ -223,15 +226,17 @@ public class BoardService {
 
 	public BoardSearchResponse search(HttpServletRequest request, SearchRequest<BoardSearchFilter> filterInfo) {
 		String userId = "";
+		boolean isLogin = false;
 		try {
 			userId = jwtManager.getUserId(request);
+			isLogin = true;
 		} catch (Exception e) {
 		}
 
 		List<BoardInfo> boardList = boardMapper.searchBoard(filterInfo, userId);
 		int total = boardMapper.searchBoardTotal(filterInfo, userId);
 
-		return BoardSearchResponse.builder().boardSearchInfo(boardList).totalCount(total).build();
+		return BoardSearchResponse.builder().boardSearchInfo(boardList).totalCount(total).isLogin(isLogin).build();
 	}
 
 	@Transactional
@@ -365,8 +370,10 @@ public class BoardService {
 	@Transactional
 	public BoardDetailResponse getBoardDetail(HttpServletRequest request, Long boardId) {
 		String userId = "";
+		boolean isLogin = false;
 		try {
 			userId = jwtManager.getUserId(request);
+			isLogin = true;
 		} catch (Exception e) {
 		}
 		BoardDetailResponse detailRes = boardMapper.getBoardDetail(userId, boardId);
@@ -394,7 +401,12 @@ public class BoardService {
 			boardEntity.setViewCount(boardEntity.getViewCount() + 1);
 
 		}
-		return detailRes.toBuilder().tags(BoardTagEntity.toList(tagList)).build();
+		// 추가 이미지 조회
+		List<BoardImageEntity> extraFileList = boardImageRepository.findByBoardIdAndType(boardId, BoardFileType.EXTRA);
+		List<Long> extraFileIdList = extraFileList.stream().map(BoardImageEntity::getId).toList();
+
+		return detailRes.toBuilder().tags(BoardTagEntity.toList(tagList)).extraImageIds(extraFileIdList)
+				.isLogin(isLogin).build();
 	}
 
 	@Transactional
@@ -481,6 +493,10 @@ public class BoardService {
 		if (followEntity == null) {
 			followEntity = FollowEntity.builder().followerId(userId).followingId(boardUserId).build();
 			followRepository.save(followEntity);
+
+			// 알림 저장
+			alarmService.saveAlarm(userId, boardUserId, null, AlarmType.FOLLOW,
+					null);
 		} else {
 			followRepository.deleteById(followEntity.getId());
 		}

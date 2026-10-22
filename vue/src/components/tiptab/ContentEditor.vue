@@ -424,7 +424,9 @@ const handleBodyClick = () => {
 watch(
 	() => props.modelValue,
 	(value) => {
-		console.log(props.modelValue.contentHtml);
+		if (props.modelValue.contentHtml === editor?.value?.getHTML()) {
+			return;
+		}
 		editor?.value
 			?.chain()
 			.focus()

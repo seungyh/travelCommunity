@@ -47,6 +47,9 @@ public class BoardTagEntity {
     // tags 값 리스트를 tag entity 리스트로 반환
     public static List<BoardTagEntity> toEntity(List<String> tags, Long boardId) {
         List<BoardTagEntity> tagEntityList = new ArrayList<>();
+        if (tags == null) {
+            return tagEntityList;
+        }
         for (String tag : tags) {
             tagEntityList.add(BoardTagEntity.builder().boardId(boardId).tag(tag).build());
         }

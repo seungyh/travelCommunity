@@ -1,5 +1,5 @@
 <template>
-	<div class="mb-10">
+	<div class="pb-30">
 		<div class="w-full justify-items-center relative">
 			<img
 				v-if="boardDetailInfo?.boardId"
@@ -46,7 +46,7 @@
 			</div>
 		</div>
 		<!-- 게시글 내용 프레임 -->
-		<div class="pr-30 pl-30">
+		<div class="px-29">
 			<div class="flex items-center justify-between pt-10 pb-5 text-sm">
 				<!-- 왼쪽: 시간, 조회수 -->
 				<div class="flex items-center gap-3 text-gray-600">
@@ -105,19 +105,30 @@
 						<div class="font-bold text-lg">
 							{{ boardDetailInfo?.nickName }}
 						</div>
-						<!-- TODO: 닉네임 밑에 자기소개? -->
-						<!-- <div class="text-gray-600 text-sm">
-							{{ boardDetailInfo?.nickName }}
-						</div> -->
+						<div class="text-gray-600 text-sm w-[97%]">
+							{{ boardDetailInfo?.bio }}
+						</div>
 					</div>
 				</div>
 				<div class="flex flex-row mt-1">
-					<div class="text-gray-600 text-md">
+					<div class="text-gray-600 text-md w-[80px]">
 						게시글
 						{{ boardDetailInfo?.boardCount.toLocaleString() }}개
 					</div>
-					<div class="ml-2">
+					<div
+						v-if="boardDetailInfo.userId !== auth.getUserId()"
+						class="content-center"
+					>
 						<button
+							v-if="boardDetailInfo.follow"
+							@click.stop="toggleFollow(boardDetailInfo.userId)"
+							class="btn p-1 text-sm rounded-3xl! bg-gray-200 w-[80px] hover:bg-gray-300"
+						>
+							팔로잉
+						</button>
+						<button
+							v-else
+							@click.stop="toggleFollow(boardDetailInfo.userId)"
 							class="btn p-1 text-sm rounded-3xl! bg-teal-500 w-[80px] hover:bg-teal-600 text-white"
 						>
 							팔로우
@@ -133,7 +144,23 @@
 					:editable="false"
 				/>
 			</div>
-			<!-- 태그 -->
+			<div class="flex flex-wrap mt-2">
+				<div
+					v-for="(id, index) in boardDetailInfo.extraImageIds"
+					class="mr-2 mb-2 border-gray"
+				>
+					<div
+						class="w-[250px] h-[200px] text-center content-center relative group"
+					>
+						<img
+							:src="`/web/api/board/file/${id}`"
+							class="w-[250px] h-[200px] overflow-hidden object-cover"
+							alt="미리보기"
+						/>
+					</div>
+				</div>
+			</div>
+			<!-- 관련태그 -->
 			<div class="mt-5 mb-10">
 				<div class="text-gray-600 text-md mb-2">관련 태그</div>
 				<div>
@@ -181,11 +208,29 @@
 				<div class="flex flex-row mt-1">
 					<div class="ml-2">
 						<!-- 플랫폼 별 공유 버튼? 카카오 등? -->
-						<!-- <button
-							class="btn p-1 text-sm rounded-3xl! bg-teal-500 w-[80px] hover:bg-teal-600 text-white"
+						<div
+							v-if="boardDetailInfo.userId !== auth.getUserId()"
+							class="content-center"
 						>
-							팔로우
-						</button> -->
+							<button
+								v-if="boardDetailInfo.follow"
+								@click.stop="
+									toggleFollow(boardDetailInfo.userId)
+								"
+								class="btn p-1 text-sm rounded-3xl! bg-gray-200 w-[80px] hover:bg-gray-300"
+							>
+								팔로잉
+							</button>
+							<button
+								v-else
+								@click.stop="
+									toggleFollow(boardDetailInfo.userId)
+								"
+								class="btn p-1 text-sm rounded-3xl! bg-teal-500 w-[80px] hover:bg-teal-600 text-white"
+							>
+								팔로우
+							</button>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -196,7 +241,7 @@
 					{{ boardDetailInfo.commentCount.toLocaleString() }}개</span
 				>
 				<div
-					v-if="auth.isLogin"
+					v-if="auth.getLogin()"
 					class="mt-5 bg-white rounded-2xl w-full px-5 py-5"
 				>
 					<div class="flex flex-row w-full">
@@ -217,7 +262,7 @@
 							<div>
 								<textarea
 									v-model="commentContent"
-									@input="limitCommentLength(0)"
+									maxlength="500"
 									class="w-full h-[100px] resize-none hover-green border-gray rounded-md custom-input p-2"
 									placeholder="댓글을 남겨보세요."
 								></textarea>
@@ -286,13 +331,13 @@
 									</div>
 
 									<div
-										class="mt-2 text-sm leading-6 break-words"
+										class="mt-2 text-sm leading-6 wrap-anywhere!"
 									>
 										{{ comment.content }}
 									</div>
 
 									<div
-										v-if="auth.isLogin"
+										v-if="auth.getLogin()"
 										class="mt-4 flex gap-4 text-xs text-gray-400"
 									>
 										<!-- <button>♡ 0</button> -->
@@ -400,7 +445,7 @@
 						>
 							<textarea
 								v-model="reCommentContent"
-								@input="limitCommentLength(1)"
+								maxlength="500"
 								class="w-full h-[60px] resize-none border border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-teal-400"
 								placeholder="답글을 입력하세요."
 							></textarea>
@@ -432,6 +477,7 @@ import ContentEditor from "@/components/tiptab/ContentEditor.vue";
 import type { BoardCommentInfo } from "./types/BoardCommentInfo";
 import type { BoardCommentRequest } from "./types/request/BoardCommentRequest";
 import type { BoardCommentResponse } from "./types/response/BoardCommentResponse";
+import { getAvatar, getImageSrc } from "@/utils/ImageUtil";
 
 const route = useRoute();
 const router = useRouter();
@@ -439,7 +485,6 @@ const auth = useAuthStore();
 
 const { startSpinner, endSpinner } = useSpinnerStore();
 
-const MAX_COMMENT_LENGTH = 500; // 댓글 글자 수 제한
 const boardDetailInfo = ref<BoardDetailResponse>({
 	// 게시글 정보
 	boardId: 0,
@@ -461,6 +506,7 @@ const boardDetailInfo = ref<BoardDetailResponse>({
 	nickName: "",
 	bio: "",
 	boardCount: 0,
+	extraImageIds: [],
 });
 const commentAddInfo = ref<BoardCommentRequest>({
 	// 댓글 등록 요청 정보
@@ -475,28 +521,31 @@ const commentList = ref<BoardCommentInfo[]>([]); // 댓글 정보
 const likeLoading = ref<boolean>(false);
 const reCommentInputOpen = ref<number | null>(null); // 대댓글 입력 창 오픈 - 댓글의 id로 구분
 
-// 프로필 이미지 경로 반환
-const getImageSrc = (path: string) => {
-	return path.startsWith("http")
-		? path
-		: `/web/api/account/profile?path=${encodeURIComponent(path)}`;
-};
-// 댓글 500자 제한
-const limitCommentLength = (depth: number) => {
-	if (depth === 0) {
-		commentContent.value = commentContent.value.substring(
-			0,
-			MAX_COMMENT_LENGTH,
-		);
-	} else if (depth === 1) {
-		reCommentContent.value = reCommentContent.value.substring(
-			0,
-			MAX_COMMENT_LENGTH,
-		);
+const followLoading = ref<boolean>(false); // 팔로우 로딩
+
+// 팔로우 토글
+const toggleFollow = (userId: string) => {
+	if (!auth.getLogin()) {
+		alert("로그인이 필요한 서비스입니다.");
+		return;
+	}
+	if (!followLoading.value) {
+		followLoading.value = true;
+		axios
+			.patch(`/web/api/board/follow/${userId}`)
+			.catch((res: AxiosError<ErrorResponse>) => {
+				alert(res.response?.data.errorMessage);
+			})
+			.finally(() => {
+				followLoading.value = false;
+			});
 	}
 };
 // 댓글 삭제
 const deleteComment = (commentId: number) => {
+	if (!confirm("댓글을 삭제하시겠습니까?")) {
+		return;
+	}
 	startSpinner();
 	axios
 		.delete(`/web/api/board/comment/${commentId}`)
@@ -614,14 +663,6 @@ const getBoardDetail = async (boardId: string | string[] | undefined) => {
 		.finally(() => {
 			endSpinner();
 		});
-};
-// nickName으로 아바타 생성
-const getAvatar = (nickName: string) => {
-	const url = new URL("https://api.dicebear.com/10.x/lorelei/svg");
-	url.searchParams.set("seed", nickName);
-	url.searchParams.set("size", "50");
-
-	return url.href;
 };
 
 // 게시글 삭제

@@ -1,7 +1,8 @@
 package com.travel.community.pages.board.entity;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import com.travel.community.pages.board.enums.BoardStatus;
@@ -51,11 +52,11 @@ public class BoardEntity {
     @Column(name = "like_count", nullable = false)
     private Integer likeCount = 0; // 좋아요 수
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt; // 생성일 날짜 + 시간
+    @Column(name = "created_at", nullable = false)
+    private OffsetDateTime createdAt; // 생성일 날짜 + 시간
 
     @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt; // 수정일 날짜 + 시간
+    private OffsetDateTime updatedAt; // 수정일 날짜 + 시간
 
     @Column(length = 100)
     private String place; // 여행 장소
@@ -75,13 +76,13 @@ public class BoardEntity {
     @Column(nullable = false, length = 20)
     private BoardVisibilityType visibility; // 공개 범위
 
-    @Builder.Default
+    // @Builder.Default
     @Column(name = "view_count", nullable = false)
-    private Integer viewCount = 0; // 조회수
+    private int viewCount; // 조회수
 
-    @Builder.Default
+    // @Builder.Default
     @Column(name = "shared_count", nullable = false)
-    private Integer sharedCount = 0; // 공유수
+    private int sharedCount; // 공유수
 
     @Column(name = "user_id", nullable = false)
     private String userId; // 작성자 ID
@@ -89,14 +90,25 @@ public class BoardEntity {
     @Column(nullable = false)
     private String category; // 카테고리
 
+    @Column(name = "comment_count", nullable = false)
+    private int commentCount; // 댓글 수
+
     public void setLikeCount(int likeCount) {
         this.likeCount = likeCount;
+    }
+
+    public void setCommentCount(int commentCount) {
+        this.commentCount = commentCount;
+    }
+
+    public void setViewCount(int viewCount) {
+        this.viewCount = viewCount;
     }
 
     // Dirty Checking을 통한 게시글 정보 변경
     public void changeValue(String title, String content, String contentHtml, String place, LocalDate travelStartAt,
             LocalDate travelEndAt, BoardStatus status, BoardVisibilityType visibility, String category,
-            LocalDateTime createdAt, LocalDateTime updatedAt) {
+            OffsetDateTime createdAt, OffsetDateTime updatedAt) {
         this.title = title;
         this.content = content;
         this.contentHtml = contentHtml;

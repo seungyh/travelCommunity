@@ -6,4 +6,5 @@ import type { BoardSearchInfo } from "../BoardSearchInfo";
 export interface BoardSearchResponse {
 	boardSearchInfo: BoardSearchInfo[];
 	totalCount: number;
+	login: boolean; // 로그인 여부
 }

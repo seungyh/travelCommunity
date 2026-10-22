@@ -29,7 +29,7 @@ public class BoardInfo {
     private OffsetDateTime createdAt; // 등록일
     private boolean isLike; // 좋아요 여부
     private String boardFileName; // 대표 이미지 이름
-    private String profileName; // 프로필 이미지 이름
+    private String profilePath; // 프로필 이미지 경로
     private int viewCount; // 조회수
 
 }

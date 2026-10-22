@@ -34,5 +34,7 @@ public class BoardDetailResponse {
     private String nickName; // 작성자 닉네임
     private String bio; // 자기소개
     private int boardCount; // 해당 작성자의 게시글 수
+    private List<Long> extraImageIds; // 추가 이미지 id 리스트
+    private boolean isLogin; // 로그인 여부
 
 }

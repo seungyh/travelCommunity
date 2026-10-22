@@ -14,8 +14,8 @@ import { EditorContent, useEditor } from "@tiptap/vue-3";
 
 import { TagNode } from "./node/TagNode";
 
-const props = defineProps(["modelValue"]); // 기존에 입력한 태그
-const emit = defineEmits<{ (e: "modelValue", item: string[]): void }>();
+const props = defineProps<{ modelValue: string[] }>(); // 기존에 입력한 태그
+const emit = defineEmits<{ (e: "update:modelValue", item: string[]): void }>();
 
 const editor = useEditor({
 	content: "<p></p>",
@@ -24,7 +24,7 @@ const editor = useEditor({
 
 	// 에디터 변경 시 부모 컴포넌트로 태그 전송
 	onUpdate({ editor }) {
-		emit("modelValue", getTags());
+		emit("update:modelValue", getTags());
 	},
 	editorProps: {
 		attributes: {
@@ -126,6 +126,12 @@ watch(
 	async (value) => {
 		await nextTick();
 		if (!editor.value) {
+			return;
+		}
+		const currentTags = getTags();
+
+		// 부모에 emit 변경 값은 처리 안함
+		if (JSON.stringify(currentTags) === JSON.stringify(value)) {
 			return;
 		}
 		for (const tag of props.modelValue) {

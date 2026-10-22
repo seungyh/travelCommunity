@@ -3,11 +3,14 @@
 		<div class="grid grid-cols-3 gap-4">
 			<div
 				v-for="(board, index) in boardList"
-				class="rounded-lg border-gray hover:shadow-md cursor-pointer"
+				class="group rounded-lg border-gray hover:shadow-md cursor-pointer"
 				@click="router.push('/board/detail/' + board.boardId)"
 			>
 				<div class="h-[200px] overflow-hidden rounded-t-lg">
-					<img :src="'/web/api/board/feature/' + board.boardId" />
+					<img
+						:src="'/web/api/board/feature/' + board.boardId"
+						class="object-cover transition-transform duration-300 group-hover:scale-105"
+					/>
 				</div>
 				<div class="py-2 px-4">
 					<div
@@ -21,11 +24,19 @@
 						{{ board.content }}
 					</div>
 					<div class="flex flex-row mt-1">
-						<img
-							:src="getAvatar(board.nickName)"
-							alt="Avatar"
-							class="w-12 h-12 object-cover"
-						/>
+						<div
+							class="w-14 h-12 rounded-full mr-2 overflow-hidden"
+						>
+							<img
+								:src="
+									board.profilePath
+										? getImageSrc(board.profilePath)
+										: getAvatar(board.nickName)
+								"
+								alt="Avatar"
+								class="w-full h-full object-cover"
+							/>
+						</div>
 						<div class="w-full flex justify-between">
 							<div>
 								<div>{{ board.nickName }}</div>
@@ -33,8 +44,23 @@
 									{{ getDiffDateFromToday(board.createdAt) }}
 								</div>
 							</div>
-							<div class="content-center">
+							<div
+								v-if="
+									auth.getLogin() &&
+									board.userId !== auth.getUserId()
+								"
+								class="content-center"
+							>
 								<button
+									v-if="board.follow"
+									@click.stop="toggleFollow(board.userId)"
+									class="btn p-1 text-sm rounded-3xl! bg-gray-200 w-[80px] hover:bg-gray-300"
+								>
+									팔로잉
+								</button>
+								<button
+									v-else
+									@click.stop="toggleFollow(board.userId)"
 									class="btn p-1 text-sm rounded-3xl! bg-teal-500 w-[80px] hover:bg-teal-600 text-white"
 								>
 									팔로우
@@ -60,7 +86,7 @@
 								:icon="['far', 'heart']"
 							/>
 							<span class="text-gray-600 text-lg ml-2">
-								{{ board.likeCount }}
+								{{ board.likeCount.toLocaleString() }}
 							</span>
 						</div>
 						<div class="ml-2">
@@ -69,7 +95,16 @@
 								:icon="['far', 'comment']"
 							/>
 							<span class="text-gray-600 text-lg ml-2">
-								{{ board.commentCount }}
+								{{ board.commentCount.toLocaleString() }}
+							</span>
+						</div>
+						<div class="ml-2">
+							<font-awesome-icon
+								class="text-gray-600 text-lg"
+								:icon="['far', 'eye']"
+							/>
+							<span class="text-gray-600 text-lg ml-2">
+								{{ board.viewCount.toLocaleString() }}
 							</span>
 						</div>
 					</div>
@@ -92,6 +127,7 @@ import { useAuthStore } from "@/stores/Auth";
 import { getDiffDateFromToday } from "@/utils/DateUtil";
 import { useSpinnerStore } from "@/stores/Spinner";
 import { useRouter } from "vue-router";
+import { getAvatar, getImageSrc } from "@/utils/ImageUtil";
 
 const props = defineProps<{
 	filter: BoardSearchFilter;
@@ -113,8 +149,37 @@ const searchRequest = ref<SearchRequest<BoardSearchFilter>>({
 });
 
 const boardList = ref<BoardSearchInfo[]>();
-const likeLoading = ref<boolean>(false);
+const likeLoading = ref<boolean>(false); // 좋아요 로딩
+const followLoading = ref<boolean>(false); // 팔로우 로딩
 
+// 팔로우 토글
+const toggleFollow = (userId: string) => {
+	if (!auth.getLogin()) {
+		alert("로그인이 필요한 서비스입니다.");
+		return;
+	}
+	if (!followLoading.value) {
+		followLoading.value = true;
+		axios
+			.patch(`/web/api/board/follow/${userId}`)
+			.then(() => {
+				// 팔로우 토글 성공 후 화면에서 해당 유저의 게시글 전부 토글
+				if (boardList.value) {
+					boardList.value.forEach((board) => {
+						if (board.userId === userId) {
+							board.follow = !board.follow;
+						}
+					});
+				}
+			})
+			.catch((res: AxiosError<ErrorResponse>) => {
+				alert(res.response?.data.errorMessage);
+			})
+			.finally(() => {
+				followLoading.value = false;
+			});
+	}
+};
 // 게시글 좋아요
 const toggleLike = (index: number, boardId: number) => {
 	if (!auth.getLogin()) {
@@ -162,6 +227,9 @@ const getNextBoardList = (sortField: string) => {
 	axios
 		.post("/web/api/board/search", searchRequest.value)
 		.then((res: AxiosResponse<BoardSearchResponse>) => {
+			if (!res.data.login) {
+				auth.setLogout();
+			}
 			boardList.value = res.data.boardSearchInfo;
 			emit("totalCount", res.data.totalCount);
 		})
@@ -169,14 +237,6 @@ const getNextBoardList = (sortField: string) => {
 		.finally(() => {
 			endSpinner();
 		});
-};
-// nickName으로 아바타 생성
-const getAvatar = (nickName: string) => {
-	const url = new URL("https://api.dicebear.com/10.x/lorelei/svg");
-	url.searchParams.set("seed", nickName);
-	url.searchParams.set("size", "50");
-
-	return url.href;
 };
 
 // 게시글 정보 조회 함수를 부모에서 접근 가능하게 허용

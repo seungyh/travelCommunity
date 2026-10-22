@@ -11,5 +11,6 @@ export interface BoardSearchInfo {
 	createdAt: Date; // 등록일
 	like: boolean; // 좋아요 여부
 	boardFileName: string; // 대표 이미지 이름
-	profileName: string; // 프로필 이미지 이름
+	profilePath: string; // 프로필 이미지 경로
+	viewCount: number; // 조회수
 }

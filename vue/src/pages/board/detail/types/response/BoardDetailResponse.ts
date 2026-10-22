@@ -21,4 +21,5 @@ export interface BoardDetailResponse {
 	nickName: string; // 작성자 nickName
 	bio: string; // 작성자 간단 자기소개
 	boardCount: number; // 해당 작성자의 게시글 수
+	extraImageIds: number[]; // 추가 이미지 id 리스트
 }

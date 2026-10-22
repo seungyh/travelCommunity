@@ -17,5 +17,6 @@ public class BoardSearchResponse {
 
     private List<BoardInfo> boardSearchInfo; // 게시글 정보
     private int totalCount; // 게시글 총 개수
+    private boolean isLogin; // 로그인 여부
 
 }
