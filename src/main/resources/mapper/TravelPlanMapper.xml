@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="com.travel.community.pages.travelPlan.repository.mapper.TravelPlanMapper">
+    <select id="getPlanList" parameterType="string" resultType="com.travel.community.pages.travelPlan.dto.PlanOverview">
+        SELECT
+            id AS planId
+            , title AS title
+            , start_at AS startAt
+            , end_at AS endAt
+            , place
+            , created_at AS createdAt
+        FROM 
+            travel_plans
+        WHERE 
+            user_id = #{userId}
+            OR id IN (SELECT plan_id
+                    FROM travel_plan_member
+                    WHERE user_id = #{userId}
+                    )
+        ORDER BY
+            created_at DESC
+    </select>
+</mapper>
