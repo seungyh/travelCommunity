@@ -10,4 +10,6 @@ public interface AccountRepository extends JpaRepository<UserEntity, Long> {
 
     Optional<UserEntity> findByUserId(String userId);
 
+    Optional<UserEntity> getByInviteCode(String tag);
+
 }

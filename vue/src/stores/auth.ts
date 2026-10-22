@@ -22,9 +22,12 @@ export const useAuthStore = defineStore("auth", () => {
 	};
 	//로그아웃 상태 저장
 	const setLogout = () => {
+		sessionStorage.removeItem("userId");
 		isLogin.value = false;
-		email.value = "";
-		nickName.value = "";
+		setEmail("");
+		setNickName("");
+		setUserId("");
+		setProfileImagePath("");
 	};
 
 	const setEmail = (userEmail: string) => {
@@ -108,5 +111,6 @@ export const useAuthStore = defineStore("auth", () => {
 		setNickName,
 		getNickName,
 		getProfileImagePath,
+		setProfileImagePath,
 	};
 });

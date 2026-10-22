@@ -12,7 +12,8 @@ import lombok.Getter;
 public enum AccountErrorCode implements CommonErrorCode {
 
     EXIST_ACCOUNT(HttpStatus.BAD_REQUEST, "ACCOUNT-001", "이미 존재하는 ID입니다."),
-    INVALID_ACCOUNT(HttpStatus.BAD_REQUEST, "ACCOUNT-002", "아이디 또는 비밀번호가 올바르지 않습니다."),
+    NOT_EXIST_ACCOUNT(HttpStatus.BAD_REQUEST, "ACCOUNT-002", "존재하지 않는 사용자입니다."),
+    INVALID_ACCOUNT(HttpStatus.BAD_REQUEST, "ACCOUNT-003", "아이디 또는 비밀번호가 올바르지 않습니다."),
     ;
 
     private HttpStatus httpStatus;

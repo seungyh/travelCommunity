@@ -8,7 +8,7 @@
 			/>
 			<img
 				v-else
-				:src="src"
+				:src="getAvatar(auth.getNickName())"
 				alt="Avatar"
 				class="rounded-full w-12 h-12 bg-gray-300"
 			/>
@@ -27,7 +27,7 @@
 							auth.getEmail() ?? "이메일을 등록해주세요."
 						}}</span>
 					</div>
-					<div class="dropdown-item">
+					<div @click="router.push('/my-page')" class="dropdown-item">
 						<font-awesome-icon :icon="['far', 'user']" />
 						마이 페이지
 					</div>
@@ -52,16 +52,20 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { computed, ref } from "vue";
-import { DropdownType } from "../types/DropdownType";
+import { DropdownType } from "../enmus/DropdownType";
 import axios, { AxiosError, type AxiosResponse } from "axios";
 import type { CommonResponse } from "@/components/common/types/response/CommonResponse";
 import type { ErrorResponse } from "@/components/common/types/response/ErrorResponse";
 import { useAuthStore } from "@/stores/Auth";
+import { useRoute, useRouter } from "vue-router";
+import { getAvatar, getImageSrc } from "@/utils/ImageUtil.ts";
 
+const router = useRouter();
+const route = useRoute();
 const props = defineProps(["userId", "openDropdownType"]);
 
 const auth = useAuthStore();
+
 // 로그아웃
 const logout = () => {
 	axios
@@ -77,21 +81,14 @@ const logout = () => {
 };
 // 로그아웃 처리
 const logoutProcess = () => {
-	sessionStorage.removeItem("userId");
 	auth.setLogout();
-};
-const src = computed(() => {
-	const url = new URL("https://api.dicebear.com/10.x/lorelei/svg");
-	url.searchParams.set("seed", auth.getNickName());
-	url.searchParams.set("size", "50");
+	let isRequireAuth = router.currentRoute.value.matched.some(
+		(route) => route.meta.requiresAuth === true,
+	);
 
-	return url.href;
-});
-// 프로필 이미지 경로 반환
-const getImageSrc = (path: string) => {
-	return path.startsWith("http")
-		? path
-		: `/web/api/file?path=${encodeURIComponent(path)}`;
+	if (isRequireAuth) {
+		router.push("/");
+	}
 };
 </script>
 <style scoped>

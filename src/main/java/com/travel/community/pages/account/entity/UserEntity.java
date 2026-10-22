@@ -68,7 +68,19 @@ public class UserEntity {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt; // 자기 정보 변경일
 
+    @Column(name = "invite_code", unique = true)
+    private String inviteCode; // 계정 초대 코드
+
     public void setUserId(String id) {
         this.userId = id;
+    }
+
+    public void updateProfileInfo(String nickName, String bio) {
+        this.nickName = nickName;
+        this.bio = bio;
+    }
+
+    public void setInviteCode(String inviteCode) {
+        this.inviteCode = inviteCode;
     }
 }

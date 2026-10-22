@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="com.travel.community.pages.account.repository.mapper.MyPageMapper">
+
+    <select id="getMyPageInfo" resultType="com.travel.community.pages.account.dto.response.MyPageResponse">
+        SELECT 
+            user_id AS userId
+            , nickname AS nickName
+            , email
+            , created_at AS createdAt
+            , bio
+            , invite_code AS inviteCode
+            , board.boardCount AS boardCount
+            , board.boardLike AS boardLike
+            , (SELECT COUNT(*)
+                FROM follow
+                WHERE follow.follower_id = #{userId}) AS followingCount
+            , (SELECT COUNT(*)
+                FROM follow
+                WHERE follow.following_id = #{userId}) AS followerCount
+            , profile.profilePath AS profilePath
+            , profile.backgroundPath AS backgroundPath
+        FROM 
+            users users
+        LEFT JOIN
+            (SELECT 
+                user_id AS userId
+                , COUNT(*) AS boardCount
+                , COALESCE(SUM(like_count), 0) AS boardLike
+            FROM board
+            WHERE user_id = #{userId}
+            GROUP BY user_id
+            ) board
+        ON 
+            board.userId = users.user_id
+        LEFT JOIN
+            (SELECT 
+                user_id AS userId
+                , MAX(CASE
+                        WHEN file_type = 0 THEN path
+                    END) AS profilePath
+                , MAX(CASE
+                        WHEN file_type = 1 THEN path
+                    END) AS backgroundPath
+             FROM profile_files
+             WHERE user_id = #{userId}
+             GROUP BY user_id) AS profile
+        ON
+            users.user_id = profile.userId
+        WHERE 
+            user_id = #{userId}
+    </select>
+    <select id="getFollowList" parameterType="com.travel.community.pages.account.dto.request.FollowListRequest" resultType="com.travel.community.pages.account.dto.FollowInfo">
+        SELECT 
+            users.user_id AS userId
+            , users.nickname AS nickName
+            , users.bio AS bio
+            , profile.path AS profilePath
+        FROM 
+            follow follow
+        JOIN 
+            users users
+        <choose>
+            <when test="tabType.name() == 'FOLLOWER'">
+                ON users.user_id = follow.follower_id
+            </when>
+            <when test="tabType.name() == 'FOLLOWING'">
+                ON users.user_id = follow.following_id
+            </when>
+        </choose>
+
+        LEFT JOIN 
+            profile_files profile
+        ON 
+            profile.user_id = users.user_id AND profile.file_type = 0
+        WHERE
+        <choose>
+            <when test="tabType.name() == 'FOLLOWER'">
+                follow.following_id = #{userId}
+            </when>
+            <when test="tabType.name() == 'FOLLOWING'">
+                follow.follower_id = #{userId}
+            </when>
+        </choose>
+    </select>
+</mapper>
