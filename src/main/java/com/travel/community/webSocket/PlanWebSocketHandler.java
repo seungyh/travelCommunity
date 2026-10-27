@@ -91,7 +91,7 @@ public class PlanWebSocketHandler extends BinaryWebSocketHandler {
         // 접속자 데이터 전송
         socketUsers.put(
                 session.getId(),
-                new SocketUser(userId, user.getNickName(), profile.getPath(), syncProvider));
+                new SocketUser(userId, user.getNickName(), profile != null ? profile.getPath() : "", syncProvider));
 
         // 같은 방 사용자들에게 접속자 변경 알림
         sendJoinUser(planId);
@@ -226,7 +226,7 @@ public class PlanWebSocketHandler extends BinaryWebSocketHandler {
                             newProviderSession.getId(),
                             new SocketUser(
                                     user.getUserId(),
-                                    user.getNickname(),
+                                    user.getNickName(),
                                     user.getProfilePath(),
                                     true));
                 }

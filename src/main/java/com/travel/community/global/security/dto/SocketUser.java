@@ -11,7 +11,7 @@ import lombok.Getter;
 @AllArgsConstructor
 public class SocketUser {
     private String userId;
-    private String nickname;
+    private String nickName;
     private String profilePath;
     private boolean syncProvider;
 }
