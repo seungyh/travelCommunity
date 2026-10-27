@@ -1,116 +1,108 @@
 <template>
-	<div class="w-full pt-3">
-		<div class="relative">
-			아이디
-			<input
-				v-model="signUpInfo.userId"
-				class="w-full h-[40px] rounded-md border pr-2 pl-10"
-				placeholder="아이디를 입력해주세요."
-			/>
-			<font-awesome-icon
-				class="absolute left-3 bottom-3 text-gray-500"
-				size="md"
-				:icon="['far', 'envelope']"
-			/>
-		</div>
-		<div class="relative">
-			비밀번호
-			<input
-				v-model="signUpInfo.password"
-				placeholder="비밀번호를 입력해주세요."
-				:type="isHidePwd[0] ? 'password' : 'text'"
-				class="w-full h-[40px] rounded-md border pr-10 pl-10"
-			/>
-			<font-awesome-icon
-				class="absolute left-3 bottom-3 text-gray-500"
-				size="md"
-				icon="lock"
-			/>
-			<font-awesome-icon
-				v-if="!isHidePwd[0]"
-				@click="isHidePwd[0] = !isHidePwd[0]"
-				class="absolute right-3 bottom-3 text-gray-500 cursor-pointer"
-				size="md"
-				icon="eye"
-			/>
-			<font-awesome-icon
-				v-else
-				@click="isHidePwd[0] = !isHidePwd[0]"
-				class="absolute right-3 bottom-3 text-gray-500 cursor-pointer"
-				size="md"
-				icon="eye-slash"
-			/>
-		</div>
-		<div class="relative">
-			비밀번호 확인
-			<input
-				v-model="pwCheck"
-				placeholder="비밀번호를 다시 입력해주세요."
-				:type="isHidePwd[1] ? 'password' : 'text'"
-				class="w-full h-[40px] rounded-md border pr-10 pl-10"
-			/>
-			<font-awesome-icon
-				class="absolute left-3 bottom-3 text-gray-500"
-				size="md"
-				icon="lock"
-			/>
-			<font-awesome-icon
-				v-if="!isHidePwd[1]"
-				@click="isHidePwd[1] = !isHidePwd[1]"
-				class="absolute right-3 bottom-3 text-gray-500 cursor-pointer"
-				size="md"
-				icon="eye"
-			/>
-			<font-awesome-icon
-				v-else
-				@click="isHidePwd[1] = !isHidePwd[1]"
-				class="absolute right-3 bottom-3 text-gray-500 cursor-pointer"
-				size="md"
-				icon="eye-slash"
-			/>
-		</div>
-		<div class="relative">
-			이메일
-			<input
-				v-model="signUpInfo.email"
-				class="w-full h-[40px] rounded-md border pr-2 pl-10"
-				placeholder="example@example.com"
-			/>
-			<font-awesome-icon
-				class="absolute left-3 bottom-3 text-gray-500"
-				size="md"
-				:icon="['far', 'envelope']"
-			/>
-		</div>
-		<div class="relative">
-			닉네임
-			<div class="w-full flex flex-row">
-				<input
-					v-model="signUpInfo.nickName"
-					class="w-[79%] h-[40px] rounded-md border pr-2 pl-10"
-					placeholder="닉네임을 입력해주세요."
-				/>
-				<font-awesome-icon
-					class="absolute left-3 bottom-3 text-gray-500"
-					size="md"
-					:icon="['far', 'user']"
-				/>
-				<button
-					class="h-[40px] w-[20%] ml-1! btn text-white border bg-green-600 disabled:bg-green-800 disabled:cursor-default cursor-pointer"
-					:disabled="isGenerating"
-					@click="getNickName()"
+	<form class="grid gap-4" @submit.prevent="signUp">
+		<template v-for="field in signUpFields" :key="field.key">
+			<div>
+				<label
+					:for="`signup-${field.key}`"
+					class="mb-2 block text-sm font-semibold text-gray-700"
+					>{{ field.label }}</label
 				>
-					랜덤 생성
-				</button>
+				<div class="flex items-center gap-2">
+					<div class="relative min-w-0 flex-1">
+						<font-awesome-icon
+							:icon="field.icon"
+							class="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-gray-400"
+						/>
+						<input
+							:id="`signup-${field.key}`"
+							v-model="signUpInfo[field.key]"
+							:type="
+								field.key === 'password'
+									? isHidePwd[0]
+										? 'password'
+										: 'text'
+									: field.key === 'email'
+										? 'email'
+										: 'text'
+							"
+							:autocomplete="field.autocomplete"
+							:placeholder="field.placeholder"
+							class="h-12 w-full rounded-xl border border-gray-300 bg-white px-11 text-sm text-gray-900 outline-none placeholder:text-gray-400 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10"
+							required
+						/>
+						<button
+							v-if="field.key === 'password'"
+							type="button"
+							class="absolute top-1 right-1 size-10 cursor-pointer rounded-lg text-gray-500 hover:bg-gray-100"
+							:aria-label="
+								isHidePwd[0]
+									? '비밀번호 표시'
+									: '비밀번호 숨기기'
+							"
+							:aria-pressed="!isHidePwd[0]"
+							@click="isHidePwd[0] = !isHidePwd[0]"
+						>
+							<font-awesome-icon
+								:icon="isHidePwd[0] ? 'eye-slash' : 'eye'"
+							/>
+						</button>
+					</div>
+					<button
+						v-if="field.key === 'nickName'"
+						type="button"
+						class="h-12 shrink-0 cursor-pointer rounded-xl border border-teal-100 bg-teal-50 px-3 text-xs font-semibold text-teal-700 hover:bg-teal-100 disabled:cursor-wait disabled:opacity-60"
+						:disabled="isGenerating"
+						@click="getNickName"
+					>
+						랜덤 생성
+					</button>
+				</div>
 			</div>
-		</div>
-	</div>
-	<div
-		class="cursor-pointer rounded-md bg-teal-500 text-white w-full text-center h-[40px] pt-2"
-		style="margin-top: 10px"
-	>
-		<span @click="signUp">회원가입</span>
-	</div>
+			<div v-if="field.key === 'password'">
+				<label
+					for="signup-password-confirm"
+					class="mb-2 block text-sm font-semibold text-gray-700"
+					>비밀번호 확인</label
+				>
+				<div class="relative">
+					<font-awesome-icon
+						icon="lock"
+						class="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-gray-400"
+					/>
+					<input
+						id="signup-password-confirm"
+						v-model="pwCheck"
+						:type="isHidePwd[1] ? 'password' : 'text'"
+						autocomplete="new-password"
+						placeholder="비밀번호를 다시 입력해주세요"
+						class="h-12 w-full rounded-xl border border-gray-300 bg-white px-11 text-sm text-gray-900 outline-none placeholder:text-gray-400 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10"
+						required
+					/>
+					<button
+						type="button"
+						class="absolute top-1 right-1 size-10 cursor-pointer rounded-lg text-gray-500 hover:bg-gray-100"
+						:aria-label="
+							isHidePwd[1]
+								? '비밀번호 확인 표시'
+								: '비밀번호 확인 숨기기'
+						"
+						:aria-pressed="!isHidePwd[1]"
+						@click="isHidePwd[1] = !isHidePwd[1]"
+					>
+						<font-awesome-icon
+							:icon="isHidePwd[1] ? 'eye-slash' : 'eye'"
+						/>
+					</button>
+				</div>
+			</div>
+		</template>
+		<button
+			type="submit"
+			class="mt-1 h-12 w-full cursor-pointer rounded-xl bg-teal-600 text-sm font-semibold text-white shadow-sm hover:bg-teal-700"
+		>
+			회원가입
+		</button>
+	</form>
 </template>
 <script setup lang="ts">
 import type { ErrorResponse } from "@/components/common/types/response/ErrorResponse";
@@ -131,6 +123,36 @@ const signUpInfo = ref({
 	nickName: "",
 });
 
+const signUpFields = [
+	{
+		key: "userId",
+		label: "아이디",
+		icon: ["far", "user"],
+		autocomplete: "username",
+		placeholder: "아이디를 입력해주세요",
+	},
+	{
+		key: "password",
+		label: "비밀번호",
+		icon: "lock",
+		autocomplete: "new-password",
+		placeholder: "비밀번호를 입력해주세요",
+	},
+	{
+		key: "email",
+		label: "이메일",
+		icon: ["far", "envelope"],
+		autocomplete: "email",
+		placeholder: "example@example.com",
+	},
+	{
+		key: "nickName",
+		label: "닉네임",
+		icon: ["far", "user"],
+		autocomplete: "nickname",
+		placeholder: "닉네임을 입력해주세요",
+	},
+] as const;
 const getNickName = () => {
 	isGenerating.value = true; // 생성동안 버튼 비활성화, 생성후 1초동안 비활성화
 	try {
