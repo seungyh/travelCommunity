@@ -16,7 +16,7 @@
 				WHERE
 					follow.follower_id = #{userId}
 					AND board.user_id = follow.following_id
-			) AS isFollow,
+			) AS follow,
 			EXISTS (
 				SELECT 1
 				FROM board_like boardLike
@@ -30,8 +30,9 @@
 			board.shared_count AS sharedCount,
 			board.comment_count AS commentCount,
 			board.created_at AS createdAt,
+			board.view_count AS viewCount,
 			boardFiles.file_name AS boardFileName,
-			profiles.file_name AS profileName
+			profiles.path AS profilePath
 		FROM 
 			board board 
 		JOIN 
@@ -41,7 +42,7 @@
 		LEFT JOIN
 			profile_files profiles
 		ON
-			profiles.user_id = users.user_id
+			profiles.user_id = users.user_id AND profiles.file_type = 0
 		LEFT JOIN
 			board_files boardFiles
 		ON
@@ -142,9 +143,9 @@
 		ON 
 			users.user_id = board.user_id
 		LEFT JOIN
-			profile_files profiles
+			profile_files profiles 
 		ON
-			profiles.user_id = users.user_id
+			profiles.user_id = users.user_id AND profiles.file_type = 0
 		LEFT JOIN
 			board_files boardFiles
 		ON
@@ -214,6 +215,7 @@
 			board.status AS status,
 			board.visibility AS visibility,
 			board.category AS category,
+			board.place AS place,
 			boardFiles.id AS featureImgId
 		FROM 
 			board board
@@ -241,6 +243,9 @@
 			board.user_id AS userId,
 			boardFiles.id AS boardFeatureId,
 			users.nickname AS nickName,
+			profiles.path AS profileImagePath,
+			users.id AS userNumber,
+			users.bio AS bio,
 			EXISTS (
 						SELECT 1
 						FROM follow follow
@@ -269,7 +274,125 @@
 			users users
 		ON
 			board.user_id = users.user_id
+		LEFT JOIN
+			profile_files profiles
+		ON 
+			profiles.user_id = users.user_id AND profiles.file_type = 0
 		WHERE 
 			board.id = #{boardId}
+	</select>
+	<select id="searchUserBoards" resultType="com.travel.community.pages.board.dto.BoardInfo">
+
+		SELECT 
+			ROW_NUMBER() OVER (ORDER BY board.created_at DESC) AS rowNum, 
+			board.id AS boardId,
+			users.user_id AS userId,
+			users.nickname AS nickName,
+			EXISTS (
+				SELECT 1
+				FROM follow follow
+				WHERE
+					follow.follower_id = #{userId}
+					AND board.user_id = follow.following_id
+			) AS follow,
+			EXISTS (
+				SELECT 1
+				FROM board_like boardLike
+				WHERE 
+					boardLike.user_id = #{userId}
+					AND board.id = boardLike.board_id
+			) AS isLike,
+			board.title AS title,
+			board.content AS content,
+			board.like_count AS likeCount,
+			board.shared_count AS sharedCount,
+			board.comment_count AS commentCount,
+			board.created_at AS createdAt,
+			board.view_count AS viewCount,
+			boardFiles.file_name AS boardFileName,
+			profiles.path AS profilePath
+		FROM 
+			board board 
+		JOIN 
+			users users
+		ON 
+			users.user_id = board.user_id
+		LEFT JOIN
+			profile_files profiles
+		ON
+			profiles.user_id = users.user_id AND profiles.file_type = 0
+		LEFT JOIN
+			board_files boardFiles
+		ON
+			board.id = boardFiles.board_id
+		AND 
+			boardFiles.type = 'FEATURE'
+		WHERE 
+			board.status = 'PUBLISHED'
+			AND board.user_id = #{profileUserId}
+		<if test="searchFilter.filter != null and searchFilter.filter.titleOrContent != null and searchFilter.filter.titleOrContent != ''"> 
+			AND (title LIKE CONCAT('%', #{searchFilter.filter.titleOrContent}, '%') OR content LIKE CONCAT('%', #{searchFilter.filter.titleOrContent}, '%'))
+		</if>
+		<if test="searchFilter.filter != null and searchFilter.filter.category != null and searchFilter.filter.category != ''">
+			AND category = #{searchFilter.filter.category}
+		</if>
+			AND 
+			(
+				board.user_id = #{userId}
+				OR board.visibility = 'PUBLIC'
+				OR board.visibility = 'FOLLOW'
+					AND board.user_id IN (
+						SELECT follow.following_id
+						FROM follow follow
+						WHERE follow.follower_id = #{userId}
+					)
+			)
+		ORDER BY board.created_at DESC, board.id DESC
+		LIMIT LEAST(GREATEST(#{searchFilter.size}, 1), 100)
+		OFFSET (GREATEST(#{searchFilter.page}, 0) * LEAST(GREATEST(#{searchFilter.size}, 1), 100))
+	
+	</select>
+
+	<select id="searchUserBoardsTotal" resultType="int">
+
+		SELECT 
+			COUNT(*)
+		FROM 
+			board board 
+		JOIN 
+			users users
+		ON 
+			users.user_id = board.user_id
+		LEFT JOIN
+			profile_files profiles 
+		ON
+			profiles.user_id = users.user_id AND profiles.file_type = 0
+		LEFT JOIN
+			board_files boardFiles
+		ON
+			board.id = boardFiles.board_id
+		AND 
+			boardFiles.type = 'FEATURE'
+		WHERE 
+			board.status = 'PUBLISHED'
+			AND board.user_id = #{profileUserId}
+		<if test="searchFilter.filter != null and searchFilter.filter.titleOrContent != null and searchFilter.filter.titleOrContent != ''"> 
+			AND (title LIKE CONCAT('%', #{searchFilter.filter.titleOrContent}, '%') OR content LIKE CONCAT('%', #{searchFilter.filter.titleOrContent}, '%'))
+		</if>
+		<if test="searchFilter.filter != null and searchFilter.filter.category != null and searchFilter.filter.category != ''">
+			AND category = #{searchFilter.filter.category}
+		</if>
+			AND 
+			(
+				board.user_id = #{userId}
+				OR board.visibility = 'PUBLIC'
+				OR board.visibility = 'FOLLOW'
+					AND board.user_id IN (
+						SELECT follow.following_id
+						FROM follow follow
+						WHERE follow.follower_id = #{userId}
+					)
+			)
+	
 	</select>
 </mapper>

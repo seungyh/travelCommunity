@@ -1,32 +1,59 @@
-<!-- TODO: 개발 필요 -->
 <template>
 	<!-- 게시글 -->
 	<div class="max-w-[980px] mx-auto pt-8">
-		<!-- 필터 -->
-		<div class="flex items-center gap-2 mb-6">
-			<button
-				class="h-8 px-4 rounded-full bg-teal-500 text-white text-sm font-semibold"
+		<!-- 카테고리 및 제목·내용 검색 -->
+		<div class="flex flex-wrap items-center gap-3 mb-6">
+			<div class="flex flex-wrap items-center gap-2">
+				<button
+					v-for="category in categories"
+					:key="category.value ?? 'ALL'"
+					type="button"
+					:aria-pressed="selectedCategory === category.value"
+					class="h-8 px-4 rounded-full text-sm border transition-colors cursor-pointer"
+					:class="
+						selectedCategory === category.value
+							? 'bg-teal-500 border-teal-500 text-white font-semibold'
+							: 'bg-white border-gray-200 text-gray-600 hover:border-teal-400 hover:text-teal-600'
+					"
+					@click="selectCategory(category.value)"
+				>
+					{{ category.label }}
+				</button>
+				<span class="ml-1 text-sm text-gray-400 whitespace-nowrap"
+					>{{ totalCount }}개</span
+				>
+			</div>
+			<form
+				class="ml-auto flex w-full sm:w-auto items-center gap-2"
+				role="search"
+				@submit.prevent="searchBoards"
 			>
-				전체
-			</button>
-
-			<button
-				class="h-8 px-4 rounded-full bg-white border border-gray-200 text-gray-600 text-sm"
-			>
-				국내
-			</button>
-
-			<button
-				class="h-8 px-4 rounded-full bg-white border border-gray-200 text-gray-600 text-sm"
-			>
-				해외
-			</button>
-
-			<span class="ml-1 text-sm text-gray-400"> 6개 </span>
+				<label for="user-board-keyword" class="sr-only"
+					>제목 또는 내용 검색</label
+				>
+				<input
+					id="user-board-keyword"
+					v-model="searchKeyword"
+					type="search"
+					placeholder="제목 또는 내용 검색"
+					class="h-9 min-w-0 flex-1 sm:w-52 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+				/>
+				<button
+					type="submit"
+					class="h-9 shrink-0 rounded-lg bg-teal-500 px-4 text-sm font-semibold text-white hover:bg-teal-600 cursor-pointer"
+				>
+					검색
+				</button>
+			</form>
 		</div>
-
+		<p
+			v-if="!isLoading && posts.length === 0"
+			class="py-10 text-center text-gray-400"
+		>
+			조회 가능한 게시글이 없습니다.
+		</p>
 		<!-- 카드 -->
-		<div class="grid grid-cols-3 gap-5">
+		<!-- <div class="grid grid-cols-3 gap-5">
 			<div
 				v-for="post in posts"
 				:key="post.id"
@@ -38,19 +65,10 @@
 					class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
 				/>
 
-				<!-- 어두운 그라데이션 -->
 				<div
 					class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"
 				></div>
 
-				<!-- 국내 -->
-				<div
-					class="absolute top-3 left-3 bg-white/90 text-gray-600 text-xs px-3 py-1 rounded-full"
-				>
-					{{ post.location }}
-				</div>
-
-				<!-- 수정 / 삭제 -->
 				<div class="absolute top-3 right-3 flex gap-2">
 					<button
 						class="w-8 h-8 bg-white/95 rounded-full text-gray-500 shadow hover:text-teal-600"
@@ -71,87 +89,99 @@
 					</p>
 				</div>
 			</div>
-		</div>
+		</div> -->
 	</div>
 </template>
 <script setup lang="ts">
+import type { ErrorResponse } from "@/components/common/types/response/ErrorResponse";
 import type { SearchRequest } from "@/components/common/types/request/SearchRequest";
-import type { BoardSearchFilter } from "@/pages/board/search/types/BoardSearchFilter";
+import type {
+	UserBoardCategory,
+	UserBoardSearchFilter,
+} from "../types/UserBoardSearchFilter";
 import type { BoardSearchInfo } from "@/pages/board/search/types/BoardSearchInfo";
 import type { BoardSearchResponse } from "@/pages/board/search/types/response/BoardSearchResponse";
-import { useSpinnerStore } from "@/stores/Spinner";
-import axios, { type AxiosResponse } from "axios";
-import { ref } from "vue";
+import axios, { type AxiosError } from "axios";
+import { computed, onBeforeUnmount, ref, watch } from "vue";
+import { useRoute } from "vue-router";
 
-interface Post {
-	id: number;
-	title: string;
-	location: string;
-	image: string;
-}
-
-const posts: Post[] = [
-	{
-		id: 1,
-		title: "제주도 여행",
-		location: "국내",
-		image: "https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff",
-	},
-	{
-		id: 2,
-		title: "부산 여행",
-		location: "국내",
-		image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e",
-	},
-	{
-		id: 3,
-		title: "서울 여행",
-		location: "국내",
-		image: "https://images.unsplash.com/photo-1538485399081-7c8974e1c8b1",
-	},
+const route = useRoute();
+const boardList = ref<BoardSearchInfo[]>([]);
+const totalCount = ref(0);
+const isLoading = ref(false);
+let requestId = 0;
+const selectedCategory = ref<UserBoardCategory | null>(null);
+const searchKeyword = ref("");
+const appliedKeyword = ref("");
+const categories: { label: string; value: UserBoardCategory | null }[] = [
+	{ label: "전체", value: null },
+	{ label: "국내 여행", value: "DOMESTIC" },
+	{ label: "해외 여행", value: "OVERSEAS" },
+	{ label: "맛집탐방", value: "FOOD" },
+	{ label: "숙소리뷰", value: "ACCOMMODATION" },
+	{ label: "여행 팁", value: "TIP" },
 ];
-const { startSpinner, endSpinner } = useSpinnerStore();
 
-// 페이지 조회 공통 조건
-const searchRequest = ref<SearchRequest<BoardSearchFilter>>({
-	filter: null,
-	sortField: "created_at",
-	sortDirection: "ASC",
-	page: 0,
-	size: 9,
-});
-
-const boardList = ref<BoardSearchInfo[]>();
-
-const getPreBoardList = () => {
-	searchRequest.value.filter.isNext = false;
+const selectCategory = (category: UserBoardCategory | null) => {
+	selectedCategory.value = category;
+	getUserBoardList();
 };
-// 다음 게시글 조회
-const getNextBoardList = (sortField: string) => {
-	startSpinner();
-	searchRequest.value.filter.isNext = true;
-	const isChangeField = searchRequest.value.sortField !== sortField; // 정렬 필드가 바뀌면
-	searchRequest.value.sortField = sortField;
+const searchBoards = () => {
+	appliedKeyword.value = searchKeyword.value.trim();
+	getUserBoardList();
+};
 
-	const lastBoard = boardList.value?.[boardList.value.length - 1]; // 마지막 게시글 가져오기
+const posts = computed(() =>
+	boardList.value.map((board) => ({
+		id: board.boardId,
+		title: board.title,
+		image: `/web/api/board/feature/${board.boardId}`,
+	})),
+);
 
-	// date cursor, likeCount cursor 세팅
-	if (isChangeField) {
-		searchRequest.value.filter.dateCursor = new Date();
-		searchRequest.value.filter.likeCursor = 99999999;
-	} else if (lastBoard) {
-		searchRequest.value.filter.dateCursor = lastBoard?.createdAt;
-		searchRequest.value.filter.likeCursor = lastBoard?.likeCount;
-	}
-	axios
-		.post("/web/api/board/search", searchRequest.value)
-		.then((res: AxiosResponse<BoardSearchResponse>) => {
+const getUserBoardList = () => {
+	const currentRequestId = ++requestId;
+	boardList.value = [];
+	totalCount.value = 0;
+	isLoading.value = false;
+	const userId = route.params.userId;
+	if (typeof userId !== "string" || !userId) return;
+
+	const searchRequest: SearchRequest<UserBoardSearchFilter> = {
+		filter: {
+			category: selectedCategory.value,
+			titleOrContent: appliedKeyword.value || null,
+		},
+		sortField: "created_at",
+		sortDirection: "DESC",
+		page: 0,
+		size: 9,
+	};
+	isLoading.value = true;
+	return axios
+		.post<BoardSearchResponse>(
+			`/web/api/board/user/${userId}`,
+			searchRequest,
+		)
+		.then((res) => {
+			if (currentRequestId !== requestId) return;
 			boardList.value = res.data.boardSearchInfo;
-			// emit("totalCount", res.data.totalCount);
+			totalCount.value = res.data.totalCount;
 		})
-		.catch()
+		.catch((error: AxiosError<ErrorResponse>) => {
+			if (currentRequestId !== requestId) return;
+			alert(
+				error.response?.data.errorMessage ??
+					"게시글 목록을 불러오지 못했습니다.",
+			);
+		})
 		.finally(() => {
-			endSpinner();
+			if (currentRequestId === requestId) isLoading.value = false;
 		});
 };
+
+watch(() => route.params.userId, getUserBoardList, { immediate: true });
+onBeforeUnmount(() => {
+	requestId++;
+});
 </script>

@@ -71,8 +71,8 @@ public class TravelPlanController {
      * @return
      */
     @GetMapping("/plan/{planId}")
-    public ResponseEntity<PlanInfoResponse> getPlan(@PathVariable Long planId) {
-        return ResponseEntity.ok(travelPlanService.getPlan(planId));
+    public ResponseEntity<PlanInfoResponse> getPlan(HttpServletRequest request, @PathVariable Long planId) {
+        return ResponseEntity.ok(travelPlanService.getPlan(request, planId));
     }
 
     /**
@@ -83,8 +83,8 @@ public class TravelPlanController {
      * @return
      */
     @PutMapping("/plan/{planId}")
-    public ResponseEntity<Void> updatePlan(@PathVariable Long planId, @RequestBody PlanUpdateRequest updateRequest) {
-        travelPlanService.updatePlan(planId, updateRequest);
+    public ResponseEntity<Void> updatePlan(HttpServletRequest request, @PathVariable Long planId, @RequestBody PlanUpdateRequest updateRequest) {
+        travelPlanService.updatePlan(request, planId, updateRequest);
         return ResponseEntity.noContent().build();
     }
 

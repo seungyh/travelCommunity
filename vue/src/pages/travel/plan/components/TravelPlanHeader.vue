@@ -28,7 +28,7 @@
 					<img
 						v-for="(user, index) in connectedUsers.slice(0, 3)"
 						:key="user.userId"
-						:src="getImageSrc(user.profilePath)"
+						:src="user.profilePath ? getImageSrc(user.profilePath) : getAvatar(user.nickName)"
 						class="w-9 h-9 rounded-full border-2 border-white"
 						:class="index > 0 ? '-ml-2' : ''"
 					/>
@@ -86,7 +86,7 @@
 <script setup lang="ts">
 import type { PlanInfo } from "../types/PlanInfo";
 import type { ConnectedUser } from "../types/ConnectedUser";
-import { getImageSrc } from "@/utils/ImageUtil.ts";
+import { getAvatar, getImageSrc } from "@/utils/ImageUtil.ts";
 
 defineProps<{
 	planInfo?: PlanInfo;

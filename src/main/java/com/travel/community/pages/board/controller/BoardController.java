@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.travel.community.pages.board.dto.BoardSearchFilter;
+import com.travel.community.pages.board.dto.UserBoardSearchFilter;
 import com.travel.community.pages.board.dto.request.BoardCommentRequest;
 import com.travel.community.pages.board.dto.request.BoardWriteRequest;
 import com.travel.community.pages.board.dto.response.BoardCommentResponse;
@@ -38,6 +39,13 @@ import lombok.extern.slf4j.Slf4j;
 public class BoardController {
 
     private final BoardService boardService;
+
+    /** 프로필 사용자 작성 게시글 조회 */
+    @PostMapping("/user/{userId}")
+    public ResponseEntity<BoardSearchResponse> searchUserBoards(HttpServletRequest request,
+            @PathVariable String userId, @RequestBody SearchRequest<UserBoardSearchFilter> filterInfo) {
+        return ResponseEntity.ok(boardService.searchUserBoards(request, userId, filterInfo));
+    }
 
     /**
      * 게시글 등록
@@ -189,7 +197,7 @@ public class BoardController {
      */
     @GetMapping("/comment/{boardId}")
     public ResponseEntity<BoardCommentResponse> getComments(HttpServletRequest request, @PathVariable Long boardId) {
-        return ResponseEntity.ok(boardService.getComments(boardId));
+        return ResponseEntity.ok(boardService.getComments(request, boardId));
     }
 
     /**

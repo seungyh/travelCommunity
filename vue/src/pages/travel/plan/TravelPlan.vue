@@ -31,7 +31,7 @@
 						<img
 							v-for="(user, index) in connectedUsers.slice(0, 3)"
 							:key="user.userId"
-							:src="getImageSrc(user.profilePath)"
+							:src="user.profilePath ? getImageSrc(user.profilePath) : getAvatar(user.nickName)"
 							class="w-9 h-9 rounded-full border-2 border-white"
 							:class="index > 0 ? '-ml-2' : ''"
 						/>
@@ -1334,7 +1334,7 @@ import {
 import UpdateTravelInfoModal from "./modal/UpdateTravelInfoModal.vue";
 import type { EditingUser } from "./types/EditingUser.ts";
 import type { IndicatorPositions } from "./types/IndicatorPositions.ts";
-import { getImageSrc } from "@/utils/ImageUtil.ts";
+import { getAvatar, getImageSrc } from "@/utils/ImageUtil.ts";
 
 const route = useRoute();
 const auth = useAuthStore();

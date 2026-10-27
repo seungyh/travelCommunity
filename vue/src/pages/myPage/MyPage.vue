@@ -1,5 +1,5 @@
 <template>
-	<div class="min-h-screen bg-[#f8fafc]">
+	<div v-if="myInfo.userId === route.params.userId" class="min-h-screen bg-[#f8fafc]">
 		<!-- 커버 -->
 		<div
 			class="w-full aspect-[1200/223] max-h-[223px] overflow-hidden cursor-pointer"
@@ -26,7 +26,7 @@
 						:src="
 							myInfo.profilePath
 								? getImageSrc(myInfo.profilePath)
-								: getAvatar(auth.getNickName())
+								: getAvatar(myInfo.nickName)
 						"
 						class="w-full h-full rounded-full object-cover"
 					/>
@@ -179,6 +179,7 @@
 					"
 					:search-type="selectedTag"
 					:user-id="myInfo.userId"
+					:key="myInfo.userId"
 				></FollowListTab>
 			</div>
 		</section>
@@ -205,7 +206,7 @@
 import type { ErrorResponse } from "@/components/common/types/response/ErrorResponse";
 import { useSpinnerStore } from "@/stores/Spinner";
 import axios, { AxiosError, type AxiosResponse } from "axios";
-import { onMounted, ref } from "vue";
+import { ref, watch } from "vue";
 import UserBoardListTab from "./tabs/UserBoardListTab.vue";
 import FollowListTab from "./tabs/FollowListTab.vue";
 import { TabValue } from "./enmus/TabValue.ts";
@@ -256,13 +257,15 @@ const openModal = (type: modalType) => {
 	}
 	isModalOpen.value = type;
 };
+let profileRequestId = 0;
 const getUserInfo = (reSearch: boolean) => {
-	console.log("reSearch", reSearch);
+	const currentRequestId = ++profileRequestId;
 	startSpinner();
 
 	axios
 		.get(`/web/api/account/my-info/${route.params.userId}`)
 		.then((res: AxiosResponse<MyPageResponse>) => {
+			if (currentRequestId !== profileRequestId) return;
 			if (res.data) {
 				myInfo.value = res.data;
 				if (reSearch) {
@@ -310,9 +313,10 @@ const copyInviteCode = async () => {
 		alert("초대 코드가 존재하지 않습니다.");
 	}
 };
-onMounted(() => {
-	console.log("??? ", route.params);
+
+watch(() => route.params.userId, () => {
+	selectedTag.value = TabValue.BOARD;
+	isModalOpen.value = null;
 	getUserInfo(false);
-	// getUserBoardList();
-});
+}, { immediate: true });
 </script>

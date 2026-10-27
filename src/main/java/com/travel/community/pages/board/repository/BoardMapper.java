@@ -8,12 +8,21 @@ import org.apache.ibatis.annotations.Param;
 import com.travel.community.pages.board.dto.BoardFileAccessInfo;
 import com.travel.community.pages.board.dto.BoardInfo;
 import com.travel.community.pages.board.dto.BoardSearchFilter;
+import com.travel.community.pages.board.dto.UserBoardSearchFilter;
 import com.travel.community.pages.board.dto.response.BoardDetailResponse;
 import com.travel.community.pages.board.dto.response.BoardDraftResponse;
 import com.travel.community.pages.common.dto.request.SearchRequest;
 
 @Mapper
 public interface BoardMapper {
+	List<BoardInfo> searchUserBoards(
+			@Param("searchFilter") SearchRequest<UserBoardSearchFilter> searchFilter,
+			@Param("userId") String viewerId, @Param("profileUserId") String profileUserId);
+
+	int searchUserBoardsTotal(
+			@Param("searchFilter") SearchRequest<UserBoardSearchFilter> searchFilter,
+			@Param("userId") String viewerId, @Param("profileUserId") String profileUserId);
+
 
 	/**
 	 * 게시글 목록 조회

@@ -24,6 +24,7 @@ import com.travel.community.pages.board.dto.BoardCommentInfo;
 import com.travel.community.pages.board.dto.BoardFileAccessInfo;
 import com.travel.community.pages.board.dto.BoardInfo;
 import com.travel.community.pages.board.dto.BoardSearchFilter;
+import com.travel.community.pages.board.dto.UserBoardSearchFilter;
 import com.travel.community.pages.board.dto.request.BoardCommentRequest;
 import com.travel.community.pages.board.dto.request.BoardWriteRequest;
 import com.travel.community.pages.board.dto.response.BoardCommentResponse;
@@ -224,6 +225,26 @@ public class BoardService {
 
 	}
 
+		// 작성자는 프로필 userId, 공개 범위와 좋아요 여부는 방문자 기준으로 조회
+	public BoardSearchResponse searchUserBoards(HttpServletRequest request, String profileUserId,
+			SearchRequest<UserBoardSearchFilter> filterInfo) {
+		String viewerId = "";
+		boolean isLogin = false;
+		try {
+			viewerId = jwtManager.getUserId(request);
+			isLogin = viewerId != null && !viewerId.isBlank();
+		} catch (Exception e) {
+			// 비로그인 방문자는 공개 게시글만 조회
+		}
+		if (!isLogin) {
+			viewerId = "";
+		}
+		List<BoardInfo> boardList = boardMapper.searchUserBoards(filterInfo, viewerId, profileUserId);
+		int total = boardMapper.searchUserBoardsTotal(filterInfo, viewerId, profileUserId);
+		return BoardSearchResponse.builder().boardSearchInfo(boardList).totalCount(total)
+				.isLogin(isLogin).build();
+	}
+
 	public BoardSearchResponse search(HttpServletRequest request, SearchRequest<BoardSearchFilter> filterInfo) {
 		String userId = "";
 		boolean isLogin = false;
@@ -367,6 +388,18 @@ public class BoardService {
 		return draftData;
 	}
 
+	private void checkBoardAccess(String userId, Long boardId) {
+		BoardEntity board = boardRepository.findById(boardId)
+				.orElseThrow(() -> new BusinessException(BoardErrorCode.NOT_EXIST_BOARD));
+		if (board.getUserId().equals(userId)) return;
+		if (board.getStatus() != BoardStatus.PUBLISHED
+				|| board.getVisibility() == BoardVisibilityType.PRIVATE
+				|| (board.getVisibility() == BoardVisibilityType.FOLLOW
+						&& followRepository.findByFollowerIdAndFollowingId(userId, board.getUserId()).isEmpty())) {
+			throw new BusinessException(BoardErrorCode.INVALID_ACCESS);
+		}
+	}
+
 	@Transactional
 	public BoardDetailResponse getBoardDetail(HttpServletRequest request, Long boardId) {
 		String userId = "";
@@ -376,6 +409,7 @@ public class BoardService {
 			isLogin = true;
 		} catch (Exception e) {
 		}
+		checkBoardAccess(userId, boardId);
 		BoardDetailResponse detailRes = boardMapper.getBoardDetail(userId, boardId);
 		List<BoardTagEntity> tagList = boardTagRepository.findByBoardId(boardId); // 태그 조회
 
@@ -412,6 +446,7 @@ public class BoardService {
 	@Transactional
 	public BoardCommentResponse addComment(HttpServletRequest request, BoardCommentRequest addCommentInfo) {
 		String userId = jwtManager.getUserId(request);
+		checkBoardAccess(userId, addCommentInfo.getBoardId());
 		// 존재하는 게시글인지 체크
 		BoardEntity boardEntity = boardRepository.findById(addCommentInfo.getBoardId())
 				.orElseThrow(() -> new BusinessException(BoardErrorCode.NOT_EXIST_BOARD));
@@ -433,7 +468,10 @@ public class BoardService {
 				.build();
 	}
 
-	public BoardCommentResponse getComments(Long boardId) {
+	public BoardCommentResponse getComments(HttpServletRequest request, Long boardId) {
+		String userId = "";
+		try { userId = jwtManager.getUserId(request); } catch (Exception e) { }
+		checkBoardAccess(userId, boardId);
 		List<BoardCommentInfo> commentList = boardCommentMapper.getComments(boardId);
 		// 삭제된 댓글 내용 지우기
 		commentList.forEach(comment -> {
@@ -453,11 +491,11 @@ public class BoardService {
 		// 존재하는 게시글인지 체크
 		BoardEntity boardEntity = boardRepository.findById(comment.getBoardId())
 				.orElseThrow(() -> new BusinessException(BoardErrorCode.NOT_EXIST_BOARD));
-		comment.setIsDel(true);
-
-		boardCommentRepository.flush();
-
-		boardEntity.setCommentCount(boardEntity.getCommentCount() - 1);
+		if (!comment.isDel()) {
+			comment.setIsDel(true);
+			boardCommentRepository.flush();
+			boardEntity.setCommentCount(boardEntity.getCommentCount() - 1);
+		}
 
 		// 삭제 후 댓글 전체 조회
 		List<BoardCommentInfo> commentList = boardCommentMapper.getComments(comment.getBoardId());

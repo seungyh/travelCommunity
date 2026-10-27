@@ -23,7 +23,6 @@ import com.travel.community.pages.travelPlan.dto.response.PlanListResponse;
 import com.travel.community.pages.travelPlan.entity.mongo.TravelPlanDocument;
 import com.travel.community.pages.travelPlan.entity.postgre.TravelPlanEntity;
 import com.travel.community.pages.travelPlan.entity.postgre.TravelPlanInvitationEntity;
-import com.travel.community.pages.travelPlan.entity.postgre.TravelPlanMemberEntity;
 import com.travel.community.pages.travelPlan.enums.TravelPlanStatus;
 import com.travel.community.pages.travelPlan.exception.enums.PlanErrorCode;
 import com.travel.community.pages.travelPlan.repository.mapper.TravelPlanMapper;
@@ -64,12 +63,13 @@ public class TravelPlanService {
         return CommonResponse.builder().result(true).message(travelPlanEntity.getId().toString()).build();
     }
 
-    public PlanInfoResponse getPlan(Long planId) {
+    public PlanInfoResponse getPlan(HttpServletRequest request, Long planId) {
         // 여행 개요 정보 조회
         TravelPlanEntity planEntity = travelPlanRepository.findById(planId)
                 .orElseThrow(() -> new BusinessException(PlanErrorCode.NOT_EXIST_PLAN));
+        checkPlanAccess(request, planEntity);
         PlanInfo planInfo = PlanInfo.from(planEntity);
-        // 해당 계획에 멤버수 조회, 생성자는 다른 테이블에 존재하므로 +1
+        // 해당 계획에 멤버수 조회, 방 생성자는 다른 테이블에 존재하므로 +1
         int memberCount = travelPlanMemberRepository.countByPlanId(planId) + 1;
 
         // 여행 계획 조회
@@ -82,10 +82,21 @@ public class TravelPlanService {
     }
 
     @Transactional
-    public void updatePlan(Long planId, PlanUpdateRequest updateRequest) {
+    public void updatePlan(HttpServletRequest request, Long planId, PlanUpdateRequest updateRequest) {
+        TravelPlanEntity plan = travelPlanRepository.findById(planId)
+                .orElseThrow(() -> new BusinessException(PlanErrorCode.NOT_EXIST_PLAN));
+        checkPlanAccess(request, plan);
         TravelPlanDocument planDocument = travelPlanDetailRepository.findById(planId).orElse(new TravelPlanDocument());
         planDocument.updatePlans(updateRequest.getDayInfoList());
         travelPlanDetailRepository.save(planDocument);
+    }
+
+    private void checkPlanAccess(HttpServletRequest request, TravelPlanEntity plan) {
+        String userId = jwtManager.getUserId(request);
+        if (!plan.getUserId().equals(userId)
+                && !travelPlanMemberRepository.existsByPlanIdAndUserId(plan.getId(), userId)) {
+            throw new BusinessException(PlanErrorCode.INVALID_ACCESS);
+        }
     }
 
     public void inviteMember(HttpServletRequest request, InviteMemberRequest inviteMemberRequest) {
@@ -107,16 +118,14 @@ public class TravelPlanService {
             throw new BusinessException(PlanErrorCode.INVITE_SELF);
         }
         // 이미 참여하고 있는 사용자인지 체크
-        TravelPlanMemberEntity memberEntity = travelPlanMemberRepository.findByUserId(userEntity.getUserId())
-                .orElse(null);
-        if (memberEntity != null) {
+        if (travelPlanMemberRepository.existsByPlanIdAndUserId(inviteMemberRequest.getPlanId(),
+                userEntity.getUserId())) {
             throw new BusinessException(PlanErrorCode.ALREADY_MEMBER);
         }
 
         // 이미 초대한 사용자인지 체크
-        TravelPlanInvitationEntity invitationEntity = travelPlanInvitationRepository
-                .findByInviteeId(userEntity.getUserId()).orElse(null);
-        if (invitationEntity != null) {
+        if (travelPlanInvitationRepository.existsByInviteeIdAndPlanId(userEntity.getUserId(),
+                inviteMemberRequest.getPlanId())) {
             throw new BusinessException(PlanErrorCode.ALREADY_INVITED_MEMBER);
         }
 
