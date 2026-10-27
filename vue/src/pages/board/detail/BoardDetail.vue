@@ -533,6 +533,9 @@ const toggleFollow = (userId: string) => {
 		followLoading.value = true;
 		axios
 			.patch(`/web/api/board/follow/${userId}`)
+			.then(() => {
+				boardDetailInfo.value.follow = !boardDetailInfo.value.follow;
+			})
 			.catch((res: AxiosError<ErrorResponse>) => {
 				alert(res.response?.data.errorMessage);
 			})
