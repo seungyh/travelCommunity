@@ -43,7 +43,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 throw new BadCredentialsException(JwtErrorCode.INVALID_JWT.getErrorMessage());
             }
 
-            var authentication = new UsernamePasswordAuthenticationToken(
+            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                     userId, null, List.of(new SimpleGrantedAuthority("ROLE_USER")));
             SecurityContextHolder.getContext().setAuthentication(authentication);
             jwtManager.refreshJwtCookie(request, response);
