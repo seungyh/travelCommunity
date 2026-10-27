@@ -18,6 +18,8 @@ import {
 	faBookmark,
 	faNoteSticky,
 	faCalendar,
+	faCopy,
+	faCommentDots,
 } from "@fortawesome/free-regular-svg-icons";
 import {
 	faCar,
@@ -48,9 +50,20 @@ import {
 	faMugSaucer,
 	faLocationDot,
 	faEllipsis,
+	faGear,
+	faRefresh,
+	faUserGroup,
+	faChevronRight,
 } from "@fortawesome/free-solid-svg-icons";
 
 library.add(
+	faChevronRight,
+	faCommentDots,
+	faBell,
+	faUserGroup,
+	faRefresh,
+	faCopy,
+	faGear,
 	faCalendar,
 	faEllipsis,
 	faNoteSticky,

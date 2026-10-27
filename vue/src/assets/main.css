@@ -15,6 +15,7 @@
   justify-self: center;
   border: solid 1px #E5E7EB;
   position: relative;
+  height: 100vh;
 }
 a,
 .green {
@@ -49,4 +50,15 @@ a,
 }
 .border-green {
   border-color: #10b981; /* 초록색 */
+}
+
+.font-green {
+  color: #0d9496; 
+}
+
+
+/* 필수 입력 별 */
+.required::after {
+  content: ' *';
+  color: #ff4d4f; /* 부드러운 붉은색 */
 }
